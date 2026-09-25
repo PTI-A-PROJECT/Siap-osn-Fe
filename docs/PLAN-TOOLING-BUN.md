@@ -14,12 +14,17 @@ Plan fitur (auth, modul soal, dst.) tidak mengulang detail tooling — cukup ruj
 
 ## 2. Scaffold (create-vue via Bun)
 
-Perintah resmi dari Vue docs untuk Bun:
+Perintah resmi dari Vue docs untuk Bun
+(terverifikasi 2026-09-25: varian `bunx` non-interaktif, tanpa separator `--`):
 
 ```bash
 cd /Volumes/PS50U
-bun create vue@latest <nama-tmp> -- --router --pinia --vitest --eslint --prettier --bare
+bunx create-vue@latest <nama-tmp> --router --pinia --vitest --eslint --prettier --bare
 ```
+
+> Catatan: `bun create vue@latest <nama-tmp> -- --router ...`
+> (dengan separator `--`) masuk ke mode interaktif di Bun 1.4.2,
+> jadi pakai bentuk `bunx` di atas untuk hasil non-interaktif.
 
 Catatan:
 

@@ -93,7 +93,7 @@ Analogi untuk tim Laravel: `router/index.js` ≈ `routes/web.php`, guard `before
 
 ```bash
 cd /Volumes/PS50U
-bun create vue@latest siap-osn-fe-tmp -- --router --pinia --vitest --eslint --prettier --bare
+bunx create-vue@latest siap-osn-fe-tmp --router --pinia --vitest --eslint --prettier --bare
 cp -R siap-osn-fe-tmp/. siap-osn-fe/   # docs/ tetap, file scaffold menyusul
 rm -rf siap-osn-fe-tmp
 cd siap-osn-fe
