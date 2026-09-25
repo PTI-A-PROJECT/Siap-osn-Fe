@@ -1,50 +1,65 @@
-# siap-osn-fe-tmp
+# SIAP OSN — Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend Vue untuk SIAP OSN. Backend: `siap-osn-be`
+(folder sejajar, `http://localhost:8080`).
 
-## Recommended IDE Setup
+## Stack
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+Vue 3 + Vite (JavaScript, bukan TypeScript), Vue Router, Pinia,
+Axios, Tailwind CSS v4 + PrimeVue 4 (preset Aura).
 
-## Recommended Browser Setup
+> **Kenapa PrimeVue 4 di-pin?** PrimeVue 5.x berlisensi komersial
+> (PrimeUI License — tidak cocok untuk universitas/instansi publik),
+> sedangkan versi 4 tetap MIT selamanya. Jangan pakai
+> `primevue@latest`. Lihat `overrides` di `package.json`:
+> `primevue@4.5.5`, `@primeuix/themes@2.0.3`, `primeicons@7.0.0`.
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Package manager + runtime dev/build: **Bun**
+(detail: `docs/PLAN-TOOLING-BUN.md`).
+Test (`vitest`) dan lint berjalan di Node — jangan pakai `--bun`
+untuk keduanya.
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
+## Cara jalan
 
 ```sh
-npm run dev
+bun install
+cp .env.example .env   # VITE_API_BASE_URL=http://localhost:8080/api/v1
 ```
 
-### Compile and Minify for Production
+Backend harus hidup di 8080 (lihat README `siap-osn-be`).
 
 ```sh
-npm run build
+bun run dev        # harus tepat di http://localhost:5173 (CORS + cookie)
+bun run test:unit
+bunx eslint .
+bun run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+## Struktur folder
 
-```sh
-npm run test:unit
+```text
+src/
+├── main.js            # createApp, Pinia, Router, PrimeVue(Aura), ToastService
+├── App.vue            # <Toast /> + <RouterView />
+├── assets/main.css    # @import tailwind, tailwindcss-primeui, primeicons
+├── lib/
+│   ├── api.js         # instance axios (baseURL, withCredentials, interceptor 401)
+│   └── errors.js      # pesan Bahasa Indonesia dari envelope error backend
+├── stores/auth.js     # user, initialized, isAuthenticated, fetchMe/login/register/logout
+├── router/index.js    # routes + meta.requiresAuth / meta.role + guard
+├── layouts/           # AuthLayout (login/register), AppLayout (header + konten)
+├── views/             # Login, Register, siswa/, admin/, Forbidden, NotFound
+└── components/        # FormField (dipakai login/register)
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+Analogi untuk tim Laravel: `router/index.js` ≈ `routes/web.php`,
+guard `beforeEach` ≈ middleware `auth` dan cek role,
+`stores/auth.js` ≈ `Auth::user()` di sisi browser,
+`lib/api.js` ≈ `Http::withOptions([...])` yang dipakai bersama,
+`views/` ≈ Blade view, `layouts/` ≈ `layouts/app.blade.php`.
 
-```sh
-npm run lint
-```
+## Aturan singkat
+
+1. Token **tidak pernah** disimpan di frontend (cookie httpOnly diurus browser).
+2. Semua request HTTP lewat `lib/api.js` (sudah `withCredentials: true`).
+3. Semua route terproteksi lewat `meta` (`requiresAuth`, `role`, `guestOnly`).
