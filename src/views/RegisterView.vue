@@ -20,6 +20,7 @@ const passwordError = ref('')
 const konfirmasiError = ref('')
 const setujuError = ref('')
 const loading = ref(false)
+const menuOpen = ref(false) // State untuk hamburger menu
 
 function validasi() {
   namaError.value = ''
@@ -27,13 +28,27 @@ function validasi() {
   passwordError.value = ''
   konfirmasiError.value = ''
   setujuError.value = ''
+
   if (nama.value.trim().length < 3) namaError.value = 'Nama minimal 3 karakter'
-  if (!email.value) emailError.value = 'Email wajib diisi'
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) emailError.value = 'Format email tidak valid'
-  if (password.value.length < 8) passwordError.value = 'Password minimal 8 karakter'
-  else if (!/[a-zA-Z]/.test(password.value) || !/[0-9]/.test(password.value)) passwordError.value = 'Password harus mengandung huruf dan angka'
-  if (konfirmasi.value !== password.value) konfirmasiError.value = 'Konfirmasi password tidak sama'
+  
+  if (!email.value) {
+    emailError.value = 'Email wajib diisi'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    emailError.value = 'Format email tidak valid'
+  }
+
+  if (password.value.length < 8) {
+    passwordError.value = 'Password minimal 8 karakter'
+  } else if (!/[a-zA-Z]/.test(password.value) || !/[0-9]/.test(password.value)) {
+    passwordError.value = 'Password harus mengandung huruf dan angka'
+  }
+
+  if (konfirmasi.value !== password.value) {
+    konfirmasiError.value = 'Konfirmasi password tidak sama'
+  }
+
   if (!setuju.value) setujuError.value = 'Persetujuan wajib dicentang'
+
   return !namaError.value && !emailError.value && !passwordError.value && !konfirmasiError.value && !setujuError.value
 }
 
@@ -58,18 +73,37 @@ async function daftar() {
 
 <template>
   <div class="register-page">
+    <!-- Navbar -->
     <header class="navbar">
       <div class="navbar-container">
-        <RouterLink to="/login" class="brand-logo" aria-label="SIAP OSN, kembali ke masuk">
-          <span class="brand-mark" aria-hidden="true">S</span>
+        <!-- Logo -->
+        <RouterLink to="/login" class="brand-logo" aria-label="SIAP OSN">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="6" width="8" height="12" rx="2" fill="#0759a5"/>
+              <rect x="14" y="6" width="8" height="12" rx="2" fill="#0759a5"/>
+              <circle cx="8" cy="12" r="2" fill="white"/>
+              <circle cx="16" cy="12" r="2" fill="white"/>
+            </svg>
+          </span>
           <span>SIAP OSN</span>
         </RouterLink>
-        <nav class="nav-menu" aria-label="Navigasi utama">
+
+        <!-- Hamburger (Mobile Only) -->
+        <button class="hamburger" @click="menuOpen = !menuOpen" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+
+        <!-- Nav Menu (Desktop) -->
+        <nav class="nav-menu" :class="{ 'is-open': menuOpen }" aria-label="Navigasi utama">
           <a href="#keunggulan">Kenapa SIAP OSN</a>
           <a href="#keunggulan">Fitur</a>
           <a href="#register-form">Cara Kerja</a>
           <a href="#register-form">Tingkat Seleksi</a>
+          <a href="#register-form">Tim Kami</a>
         </nav>
+
+        <!-- Actions -->
         <div class="nav-actions">
           <RouterLink to="/login" class="btn-login">Masuk</RouterLink>
           <a href="#register-form" class="btn-register">Daftar Gratis</a>
@@ -78,68 +112,71 @@ async function daftar() {
     </header>
 
     <main class="main-content">
+      <!-- Left Section -->
       <section id="keunggulan" class="left-section">
         <div class="left-content">
-          <p class="eyebrow">SIAPKAN DIRIMU UNTUK OSN</p>
-          <h1>Selamat<br />Datang!</h1>
+          <h1>Selamat Datang!</h1>
           <p class="description">
             Persiapan OSN Informatika yang terarah: dari pemetaan kompetensi sampai simulasi sesuai standar TOKI.
           </p>
           <ul class="feature-list">
-            <li><span class="check-icon" aria-hidden="true">✓</span>Pre-test &amp; pemetaan kompetensi</li>
-            <li><span class="check-icon" aria-hidden="true">✓</span>Materi sesuai kebutuhanmu</li>
-            <li><span class="check-icon" aria-hidden="true">✓</span>Simulasi seleksi standar TOKI</li>
+            <li><span class="check-icon"></span> Pre-test &amp; pemetaan kompetensi</li>
+            <li><span class="check-icon"></span> Materi sesuai kebutuhanmu</li>
+            <li><span class="check-icon"></span> Simulasi seleksi standar TOKI</li>
           </ul>
         </div>
       </section>
 
+      <!-- Right Section -->
       <section id="register-form" class="right-section">
         <div class="register-card">
           <div class="card-heading">
-            <p class="card-kicker">MULAI PERJALANANMU</p>
             <h2>Daftar Akun Baru</h2>
-            <p class="card-description">Buat akun untuk mulai mempersiapkan diri.</p>
           </div>
 
           <form class="register-form" @submit.prevent="daftar">
             <div class="form-group">
-              <label for="nama">Nama Lengkap <span>*</span></label>
-              <input id="nama" v-model="nama" autocomplete="name" type="text" placeholder="Masukkan nama lengkap" :aria-invalid="Boolean(namaError)" :aria-describedby="namaError ? 'nama-error' : undefined" />
-              <small v-if="namaError" id="nama-error" class="field-error">{{ namaError }}</small>
+              <label for="nama">Nama Lengkap <span class="required">*</span></label>
+              <input id="nama" v-model="nama" autocomplete="name" type="text" placeholder="Masukkan nama lengkap" :aria-invalid="Boolean(namaError)" />
+              <small v-if="namaError" class="field-error">{{ namaError }}</small>
             </div>
 
             <div class="form-group">
-              <label for="email">Email Aktif <span>*</span></label>
-              <input id="email" v-model="email" autocomplete="email" type="email" placeholder="nama@sekolah.sch.id" :aria-invalid="Boolean(emailError)" :aria-describedby="emailError ? 'email-error' : undefined" />
-              <small v-if="emailError" id="email-error" class="field-error">{{ emailError }}</small>
+              <label for="email">Email Aktif <span class="required">*</span></label>
+              <input id="email" v-model="email" autocomplete="email" type="email" placeholder="nama@sekolah.sch.id" :aria-invalid="Boolean(emailError)" />
+              <small v-if="emailError" class="field-error">{{ emailError }}</small>
             </div>
 
             <div class="form-group">
-              <label for="password">Kata Sandi <span>*</span></label>
-              <input id="password" v-model="password" autocomplete="new-password" type="password" placeholder="Buat kata sandi" :aria-invalid="Boolean(passwordError)" :aria-describedby="passwordError ? 'password-error' : 'password-hint'" />
-              <small v-if="passwordError" id="password-error" class="field-error">{{ passwordError }}</small>
-              <small v-else id="password-hint" class="field-hint">Minimal 8 karakter, kombinasi huruf dan angka</small>
+              <label for="password">Kata Sandi <span class="required">*</span></label>
+              <input id="password" v-model="password" autocomplete="new-password" type="password" placeholder="Kombinasi minimal 8 karakter" :aria-invalid="Boolean(passwordError)" />
+              <small v-if="passwordError" class="field-error">{{ passwordError }}</small>
+              <small v-else class="field-hint">Minimal 8 karakter, kombinasi huruf dan angka</small>
             </div>
 
             <div class="form-group">
-              <label for="konfirmasi">Konfirmasi Kata Sandi <span>*</span></label>
-              <input id="konfirmasi" v-model="konfirmasi" autocomplete="new-password" type="password" placeholder="Ulangi kata sandi Anda" :aria-invalid="Boolean(konfirmasiError)" :aria-describedby="konfirmasiError ? 'konfirmasi-error' : undefined" />
-              <small v-if="konfirmasiError" id="konfirmasi-error" class="field-error">{{ konfirmasiError }}</small>
+              <label for="konfirmasi">Konfirmasi Kata Sandi <span class="required">*</span></label>
+              <input id="konfirmasi" v-model="konfirmasi" autocomplete="new-password" type="password" placeholder="Ulangi kata sandi Anda" :aria-invalid="Boolean(konfirmasiError)" />
+              <small v-if="konfirmasiError" class="field-error">{{ konfirmasiError }}</small>
             </div>
 
             <div class="agreement">
-              <input id="agreement" v-model="setuju" type="checkbox" :aria-invalid="Boolean(setujuError)" :aria-describedby="setujuError ? 'agreement-error' : undefined" />
-              <label for="agreement">Saya menyetujui <a href="#agreement">Ketentuan Layanan</a> dan <a href="#agreement">Kebijakan Privasi</a> SIAP OSN</label>
+              <input id="agreement" v-model="setuju" type="checkbox" />
+              <label for="agreement">
+                Saya menyetujui <a href="#agreement">Ketentuan Layanan</a> dan <a href="#agreement">Kebijakan Privasi</a> SIAP OSN
+              </label>
             </div>
-            <small v-if="setujuError" id="agreement-error" class="field-error agreement-error">{{ setujuError }}</small>
+            <small v-if="setujuError" class="field-error agreement-error">{{ setujuError }}</small>
 
             <button class="register-button" type="submit" :disabled="loading">
               <span>{{ loading ? 'Memproses...' : 'Daftar Sekarang' }}</span>
-              <span aria-hidden="true">→</span>
+              <span class="arrow-icon">→</span>
             </button>
           </form>
 
-          <p class="login-text">Sudah punya akun? <RouterLink to="/login">Masuk di sini</RouterLink></p>
+          <p class="login-text">
+            Sudah punya akun? <RouterLink to="/login">Masuk di sini</RouterLink>
+          </p>
         </div>
       </section>
     </main>
@@ -147,84 +184,113 @@ async function daftar() {
 </template>
 
 <style scoped>
+/* ================================
+   VARIABEL & RESET
+   ================================ */
 .register-page {
-  --ink: #17233b;
-  --muted: #68758a;
+  --ink: #1a2b4b;
+  --muted: #6b7a90;
   --blue: #0759a5;
   --blue-deep: #064d91;
-  --line: #dce3ec;
+  --line: #e2e8f0;
+  --bg-soft: #f8fafc;
+
+  
   min-height: 100vh;
   color: var(--ink);
   background: #fff;
-  font-family: 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* Mencegah scroll horizontal */
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ================================
+   NAVBAR
+   ================================ */
 .navbar {
   position: sticky;
-  z-index: 2;
+  z-index: 50;
   top: 0;
   height: 72px;
   border-bottom: 1px solid var(--line);
-  background: rgb(255 255 255 / 96%);
+  background: #fff;
 }
 
 .navbar-container {
   display: flex;
   align-items: center;
-  width: min(1120px, 100% - 48px);
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px; /* Batas lebar maksimal */
   height: 100%;
   margin: 0 auto;
+  padding: 0 24px; /* Padding kiri-kanan */
 }
 
 .brand-logo {
   display: inline-flex;
-  flex-shrink: 0;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   color: var(--ink);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .brand-mark {
-  display: grid;
-  width: 28px;
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 8px;
-  background: var(--blue);
-  color: white;
-  font-size: 15px;
-}
-
-.nav-menu,
-.nav-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+/* Hamburger - Hidden by default */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
 }
 
 .nav-menu {
-  gap: 23px;
-  margin-left: 38px;
+  display: flex;
+  gap: 28px;
+  margin-left: 40px;
+  flex: 1;
 }
 
 .nav-menu a {
-  color: #536570;
-  font-size: 13px;
+  color: var(--ink);
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  transition: color 0.2s;
 }
 
-.nav-menu a:hover,
-.login-text a:hover {
+.nav-menu a:hover {
   color: var(--blue);
 }
 
 .nav-actions {
-  gap: 9px;
-  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .btn-login,
@@ -233,80 +299,82 @@ async function daftar() {
   min-height: 40px;
   align-items: center;
   justify-content: center;
-  padding: 0 15px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  color: var(--ink);
-  font-size: 13px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 700;
   text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-login {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: #fff;
+}
+
+.btn-login:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
 .btn-register {
-  border-color: var(--blue);
+  border: 1px solid var(--blue);
   background: var(--blue);
   color: white;
 }
 
-.btn-register:hover,
-.register-button:hover:not(:disabled) {
+.btn-register:hover {
   background: var(--blue-deep);
+  border-color: var(--blue-deep);
 }
 
+/* ================================
+   MAIN CONTENT GRID
+   ================================ */
 .main-content {
   display: grid;
   min-height: calc(100vh - 72px);
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.left-section,
-.right-section {
+/* ================================
+   LEFT SECTION
+   ================================ */
+.left-section {
   display: flex;
   align-items: center;
-}
-
-.left-section {
   justify-content: flex-end;
-  padding: 64px clamp(32px, 6vw, 88px) 64px 24px;
-  background: radial-gradient(ellipse at 15% 90%, #e6f1fb 0, transparent 42%), #fff;
+  padding: 60px 40px;
+  background: radial-gradient(circle at 10% 80%, #eef4fb 0%, transparent 50%), #fff;
 }
 
 .left-content {
-  width: min(100%, 480px);
-  animation: enter 500ms ease-out both;
-}
-
-.eyebrow,
-.card-kicker {
-  margin: 0 0 14px;
-  color: var(--blue);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.eyebrow {
-  letter-spacing: 1px;
+  width: 100%;
+  max-width: 480px;
 }
 
 .left-content h1 {
   margin: 0 0 20px;
-  color: #10294a;
-  font-size: 52px;
+  color: #0f2442;
+  font-size: clamp(32px, 5vw, 56px);
   font-weight: 800;
-  line-height: 1.03;
+  line-height: 1.1;
+  letter-spacing: -1px;
 }
 
 .description {
-  max-width: 460px;
-  margin: 0 0 30px;
-  color: #154b86;
-  font-size: 16px;
-  line-height: 1.65;
+  max-width: 420px;
+  margin: 0 0 32px;
+  color: #3b4b66;
+  font-size: clamp(14px, 1.6vw, 16px);
+  line-height: 1.6;
 }
 
 .feature-list {
   display: grid;
-  gap: 11px;
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -314,72 +382,75 @@ async function daftar() {
 
 .feature-list li {
   display: flex;
-  min-height: 48px;
   align-items: center;
-  gap: 12px;
-  padding: 0 14px;
-  border: 1px solid #dce7f1;
-  border-radius: 7px;
-  background: rgb(255 255 255 / 78%);
-  color: #182f50;
-  font-size: 13px;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .check-icon {
-  display: grid;
   width: 22px;
-  aspect-ratio: 1;
+  height: 22px;
   flex-shrink: 0;
-  place-items: center;
   border-radius: 50%;
-  background: #e3eef8;
-  color: var(--blue);
-  font-size: 13px;
+  background: #1e293b;
+  position: relative;
 }
 
+.check-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ================================
+   RIGHT SECTION
+   ================================ */
 .right-section {
+  display: flex;
+  align-items: center;
   justify-content: flex-start;
-  padding: 42px clamp(28px, 5.4vw, 78px);
-  background: #f0f5fb;
+  padding: 40px;
+  background: #f8fafc;
 }
 
 .register-card {
-  width: min(100%, 440px);
-  margin: 0 auto;
-  padding: 30px;
-  border: 1px solid #dce4ed;
-  border-radius: 9px;
+  width: 100%;
+  max-width: 460px;
+  padding: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background: white;
-  box-shadow: 0 12px 35px rgb(21 48 80 / 7%);
-  animation: enter 600ms 80ms ease-out both;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .card-heading {
-  margin-bottom: 23px;
-}
-
-.card-kicker {
-  margin-bottom: 8px;
-  letter-spacing: 0.7px;
+  margin-bottom: 24px;
 }
 
 .card-heading h2 {
   margin: 0;
-  color: #172033;
+  color: #0f2442;
   font-size: 22px;
   font-weight: 800;
 }
 
-.card-description {
-  margin: 7px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
+/* ================================
+   FORM
+   ================================ */
 .register-form {
   display: grid;
-  gap: 13px;
+  gap: 16px;
 }
 
 .form-group {
@@ -388,72 +459,77 @@ async function daftar() {
 }
 
 .form-group label {
-  color: #182238;
-  font-size: 12px;
-  font-weight: 750;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.form-group label span {
-  color: #c54c45;
+.required {
+  color: #ef4444;
 }
 
 .form-group input {
   width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid #d6e0eb;
-  border-radius: 6px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   outline: none;
   background: #fff;
-  color: var(--ink);
+  color: #0f2442;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input::placeholder {
-  color: #95a5aa;
+  color: #94a3b8;
 }
 
 .form-group input:focus {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgb(11 104 189 / 11%);
+  box-shadow: 0 0 0 3px rgba(7, 89, 165, 0.1);
 }
 
 .form-group input[aria-invalid='true'] {
-  border-color: #c54c45;
+  border-color: #ef4444;
 }
 
 .field-hint,
 .field-error {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .field-hint {
-  color: var(--muted);
+  color: #64748b;
 }
 
 .field-error {
-  color: #b33a35;
+  color: #ef4444;
 }
 
+/* ================================
+   AGREEMENT
+   ================================ */
 .agreement {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
-  margin-top: 3px;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .agreement input {
   position: relative;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  margin: 1px 0 0;
+  margin: 2px 0 0;
   appearance: none;
-  border: 1px solid #aebbd0;
-  border-radius: 3px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
   background: #fff;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .agreement input:checked {
@@ -464,51 +540,58 @@ async function daftar() {
 .agreement input:checked::after {
   position: absolute;
   top: 2px;
-  left: 5px;
+  left: 6px;
   width: 4px;
-  height: 7px;
+  height: 8px;
   border-right: 2px solid #fff;
   border-bottom: 2px solid #fff;
   content: '';
   transform: rotate(45deg);
 }
 
-.agreement input:focus-visible {
-  outline: 3px solid rgb(11 104 189 / 20%);
-  outline-offset: 2px;
-}
-
 .agreement label {
-  color: var(--muted);
-  font-size: 11px;
+  color: #475569;
+  font-size: 13px;
   line-height: 1.5;
 }
 
 .agreement a {
-  color: var(--blue-deep);
-  font-weight: 700;
+  color: var(--blue);
+  font-weight: 600;
   text-decoration: none;
 }
 
-.agreement-error {
-  margin-top: -9px;
+.agreement a:hover {
+  text-decoration: underline;
 }
 
+.agreement-error {
+  margin-top: -10px;
+}
+
+/* ================================
+   SUBMIT BUTTON
+   ================================ */
 .register-button {
   display: flex;
-  min-height: 44px;
+  min-height: 48px;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  margin-top: 2px;
+  gap: 10px;
+  margin-top: 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--blue);
   color: white;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.register-button:hover:not(:disabled) {
+  background: var(--blue-deep);
 }
 
 .register-button:disabled {
@@ -516,115 +599,198 @@ async function daftar() {
   opacity: 0.7;
 }
 
+.arrow-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
 .login-text {
-  margin: 19px 0 0;
-  color: #718087;
-  font-size: 12px;
+  margin: 24px 0 0;
+  color: #64748b;
+  font-size: 14px;
   text-align: center;
 }
 
 .login-text a {
-  color: var(--blue-deep);
-  font-weight: 750;
+  color: var(--blue);
+  font-weight: 700;
   text-decoration: none;
 }
 
-@keyframes enter {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.login-text a:hover {
+  text-decoration: underline;
 }
 
-@media (max-width: 950px) {
-  .nav-menu {
-    gap: 14px;
-    margin-left: 24px;
-  }
+/* ================================
+   RESPONSIVE (Container Queries)
+   ================================ */
 
-  .nav-menu a {
-    font-size: 12px;
-  }
-
+/* Tablet: ≤ 1024px */
+@media (max-width: 1024px) {
   .main-content {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;          /* hilangkan ruang kosong di atas judul */
+    align-content: start;
   }
 
   .left-section {
-    padding-right: 28px;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .description {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .feature-list {
+    max-width: 480px;
+    margin: 0 auto;
+    text-align: left;
   }
 
   .right-section {
-    padding: 32px 24px;
+    justify-content: center;
+    padding: 40px 24px 80px;
   }
 
   .register-card {
-    padding: 24px;
+    max-width: 520px;
   }
 }
 
-@media (max-width: 720px) {
+/* Tablet kecil / HP: ≤ 768px */
+@container page (max-width: 768px) {
   .navbar {
     height: 64px;
   }
 
   .navbar-container {
-    width: calc(100% - 32px);
+    padding: 0 16px;
+  }
+
+  .hamburger {
+    display: flex;
+    order: 3;
+  }
+
+  .nav-actions {
+    margin-left: auto;
+    margin-right: 8px;
   }
 
   .nav-menu {
     display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    flex: none;
+    flex-direction: column;
+    gap: 0;
+    margin-left: 0;
+    padding: 8px 24px 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    z-index: 40;
   }
 
-  .main-content {
-    grid-template-columns: 1fr;
+  .nav-menu.is-open {
+    display: flex;
+  }
+
+  .nav-menu a {
+    padding: 12px 0;
+    font-size: 15px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .nav-menu a:last-child {
+    border-bottom: none;
+  }
+
+  .nav-actions .btn-login {
+    display: none;
+  }
+
+  .nav-actions .btn-register {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
   }
 
   .left-section {
-    justify-content: center;
-    padding: 48px 24px 38px;
+    padding: 40px 20px 32px;
   }
 
   .left-content h1 {
-    font-size: 42px;
-  }
-
-  .description {
-    margin-bottom: 20px;
-    font-size: 14px;
-  }
-
-  .feature-list {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .feature-list li {
-    min-height: 42px;
+    font-size: 36px;
   }
 
   .right-section {
-    justify-content: center;
-    padding: 16px 18px 42px;
+    padding: 24px 16px 64px;
   }
 
   .register-card {
-    padding: 24px 20px;
+    padding: 28px 20px;
   }
 }
 
-@media (max-width: 380px) {
-  .btn-login,
-  .btn-register {
-    min-height: 36px;
-    padding: 0 10px;
-    font-size: 12px;
+/* HP kecil: ≤ 480px */
+@container page (max-width: 480px) {
+  .left-content h1 {
+    font-size: 30px;
+    margin-bottom: 14px;
   }
 
-  .brand-logo {
-    gap: 6px;
+  .description {
+    margin-bottom: 24px;
     font-size: 14px;
   }
+
+  .feature-list li {
+    padding: 12px 16px;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .check-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .check-icon::after {
+    width: 6px;
+    height: 6px;
+  }
+
+  .register-card {
+    padding: 24px 16px;
+    border-radius: 8px;
+  }
+
+  .card-heading h2 {
+    font-size: 20px;
+  }
+
+  .form-group input {
+    min-height: 44px;
+    font-size: 15px; /* cegah auto-zoom di iOS */
+  }
+
+  .register-button {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
+  .login-text {
+    font-size: 13px;
+  }
 }
 
+/* Aksesibilitas: tetap pakai media query karena ini preferensi sistem */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
