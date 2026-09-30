@@ -18,19 +18,30 @@ export function dashboardFor(role) {
 // Diekspor agar guard.spec.js bisa membuat router sendiri
 // dengan createMemoryHistory dari definisi route yang sama.
 export const routes = [
+  // Landing page publik, tanpa layout
+  { path: '/', name: 'landing', component: LandingPage },
+
+  // Register: halaman penuh, tanpa AuthLayout (tidak dibungkus Card)
+  {
+    path: '/register',
+    name: 'register',
+    component: RegisterView,
+    meta: { guestOnly: true },
+  },
+
+  // Login: tetap memakai AuthLayout (Card sempit)
   {
     path: '/',
     component: AuthLayout,
     children: [
       { path: 'login', name: 'login', component: LoginView, meta: { guestOnly: true } },
-      { path: 'register', name: 'register', component: RegisterView, meta: { guestOnly: true } },
     ],
   },
+
   {
     path: '/',
     component: AppLayout,
     children: [
-      { path: '', name: 'home', component: SiswaDashboardView, meta: { requiresAuth: true } },
       {
         path: 'siswa',
         name: 'siswa.dashboard',
