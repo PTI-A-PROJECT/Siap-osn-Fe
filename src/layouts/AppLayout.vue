@@ -40,7 +40,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-[#f5f8fc]">
+  <div class="app-shell flex min-h-screen bg-[#f5f8fc]">
     <!-- Sidebar -->
     <aside class="sticky top-0 flex h-screen w-[250px] shrink-0 flex-col bg-[#0a1f47] px-4 py-6">
       <div class="mb-6 flex items-center gap-3 px-2">
@@ -90,10 +90,5 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
-.nav-link.is-active {
-  background: rgb(240 179 35 / 0.14);
-  color: #f0b323;
-  font-weight: 600;
-}
-</style>
+
+<style src="@/assets/app.css"></style>

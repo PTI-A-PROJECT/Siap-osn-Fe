@@ -67,7 +67,7 @@ function masukGoogle() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 overflow-y-auto flex flex-col font-['Inter',system-ui,sans-serif] text-[#0f1b3d] bg-white">
+  <div class="login fixed inset-0 z-50 overflow-y-auto flex flex-col font-['Inter',system-ui,sans-serif] text-[#0f1b3d] bg-white">
     <PublicNavbar current="login" />
 
     <main class="flex-1 grid grid-cols-1 min-[900px]:grid-cols-2">
@@ -184,56 +184,5 @@ function masukGoogle() {
   </div>
 </template>
 
-<style scoped>
-/* Sisa CSS non-Tailwind: override komponen PrimeVue (tidak bisa via utility).
-   Semua layout halaman sudah Tailwind. */
-:deep(.p-inputtext) {
-  height: 46px;
-  padding-left: 2.4rem;
-  border-radius: 10px;
-  font-size: 13.5px;
-  background: #fff;
-  color: #0f1b3d;
-  border-color: #e2e8f0;
-}
-:deep(.p-inputtext::placeholder) {
-  color: #a0aec0;
-}
-:deep(.p-inputtext:enabled:focus) {
-  background: #fff;
-  border-color: #1e4b8f;
-  box-shadow: 0 0 0 3px rgba(30, 75, 143, 0.12);
-}
-.login-btn.p-button {
-  width: 100%;
-  justify-content: center;
-  padding: 15px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #1e4b8f;
-  border: 1px solid #1e4b8f;
-  color: #fff;
-  white-space: nowrap;
-}
-.login-btn.p-button:not(:disabled):hover {
-  background: #183d75;
-  border-color: #183d75;
-}
-.google-btn.p-button {
-  width: 100%;
-  justify-content: center;
-  gap: 8px;
-  padding: 15px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #f1f4f8;
-  border: 1px solid #e2e8f0;
-  color: #0f1b3d;
-  white-space: nowrap;
-}
-.google-btn.p-button:not(:disabled):hover {
-  background: #e8edf3;
-}
-</style>
+
+<style src="@/assets/login.css"></style>

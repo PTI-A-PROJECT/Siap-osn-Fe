@@ -65,7 +65,7 @@ async function daftar() {
 </script>
 
 <template>
-  <div class="min-h-screen text-[#17233b] bg-white font-['Avenir_Next',Avenir,'Segoe_UI',sans-serif]">
+  <div class="register min-h-screen text-[#17233b] bg-white font-['Avenir_Next',Avenir,'Segoe_UI',sans-serif]">
     <PublicNavbar current="register" />
 
     <main class="grid grid-cols-1 min-[720px]:grid-cols-[1.05fr_0.95fr] min-h-[calc(100vh-72px)]">
@@ -137,57 +137,6 @@ async function daftar() {
   </div>
 </template>
 
-<style scoped>
-/* Sisa CSS non-Tailwind: keyframes + checkbox kustom (pseudo-element).
-   Semua layout halaman sudah Tailwind. */
-@keyframes enter {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.anim-a {
-  animation: enter 500ms ease-out both;
-}
-.anim-b {
-  animation: enter 600ms 80ms ease-out both;
-}
-.agreement input {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  margin: 1px 0 0;
-  appearance: none;
-  border: 1px solid #aebbd0;
-  border-radius: 3px;
-  background: #fff;
-  cursor: pointer;
-}
-.agreement input:checked {
-  border-color: #0759a5;
-  background: #0759a5;
-}
-.agreement input:checked::after {
-  position: absolute;
-  top: 2px;
-  left: 5px;
-  width: 4px;
-  height: 7px;
-  border-right: 2px solid #fff;
-  border-bottom: 2px solid #fff;
-  content: '';
-  transform: rotate(45deg);
-}
-.agreement input:focus-visible {
-  outline: 3px solid rgb(11 104 189 / 20%);
-  outline-offset: 2px;
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-  }
-}
-</style>
+
+
+<style src="@/assets/register.css"></style>

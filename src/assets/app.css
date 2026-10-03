@@ -1,0 +1,12 @@
+/* ============================================================
+   Global CSS — shell aplikasi login (AppLayout).
+   Status aktif link sidebar; kelas `is-active` dipasang dinamis
+   via exact-active-class, tak bisa murni utility.
+   Diimpor sekali oleh AppLayout (chunk layout).
+   ============================================================ */
+
+.app-shell .nav-link.is-active {
+  background: rgb(240 179 35 / 0.14);
+  color: #f0b323;
+  font-weight: 600;
+}
