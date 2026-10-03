@@ -21,6 +21,8 @@ const passwordError = ref('')
 const konfirmasiError = ref('')
 const setujuError = ref('')
 const loading = ref(false)
+const showPw = ref(false)
+const showKonfirmasi = ref(false)
 
 function validasi() {
   namaError.value = ''
@@ -71,50 +73,57 @@ async function daftar() {
     <main class="grid grid-cols-1 min-[720px]:grid-cols-[1.05fr_0.95fr] min-h-[calc(100vh-72px)]">
       <section id="keunggulan" class="flex items-center justify-center px-6 pt-12 pb-[38px] min-[720px]:justify-end min-[720px]:py-16 min-[720px]:pl-6 min-[720px]:pr-7 min-[950px]:pr-[clamp(32px,6vw,88px)] bg-[radial-gradient(ellipse_at_15%_90%,#e6f1fb_0,transparent_42%),#fff]">
         <div class="w-full max-w-[480px] anim-a">
-          <p class="text-[#0759a5] text-[11px] font-extrabold mb-[14px] tracking-[1px]">SIAPKAN DIRIMU UNTUK OSN</p>
-          <h1 class="mb-5 text-[#10294a] text-[42px] min-[720px]:text-[52px] font-extrabold leading-[1.03]">Selamat<br />Datang!</h1>
+          <h1 class="mb-5 text-[#10294a] text-[42px] min-[720px]:text-[52px] font-extrabold leading-[1.03]">Selamat Datang!</h1>
           <p class="max-w-[460px] mb-5 min-[720px]:mb-[30px] text-[#154b86] text-sm min-[720px]:text-base leading-[1.65]">
             Persiapan OSN Informatika yang terarah: dari pemetaan kompetensi sampai simulasi sesuai standar TOKI.
           </p>
           <ul class="grid gap-2 min-[720px]:gap-[11px] m-0 p-0 list-none">
-            <li class="flex min-h-[42px] min-[720px]:min-h-12 items-center gap-3 px-3.5 border border-[#dce7f1] rounded-[7px] bg-[rgb(255_255_255/78%)] text-[#182f50] text-[13px] font-bold"><span class="grid w-[22px] aspect-square flex-none place-items-center rounded-full bg-[#e3eef8] text-[#0759a5] text-[13px]" aria-hidden="true">✓</span>Pre-test &amp; pemetaan kompetensi</li>
-            <li class="flex min-h-[42px] min-[720px]:min-h-12 items-center gap-3 px-3.5 border border-[#dce7f1] rounded-[7px] bg-[rgb(255_255_255/78%)] text-[#182f50] text-[13px] font-bold"><span class="grid w-[22px] aspect-square flex-none place-items-center rounded-full bg-[#e3eef8] text-[#0759a5] text-[13px]" aria-hidden="true">✓</span>Materi sesuai kebutuhanmu</li>
-            <li class="flex min-h-[42px] min-[720px]:min-h-12 items-center gap-3 px-3.5 border border-[#dce7f1] rounded-[7px] bg-[rgb(255_255_255/78%)] text-[#182f50] text-[13px] font-bold"><span class="grid w-[22px] aspect-square flex-none place-items-center rounded-full bg-[#e3eef8] text-[#0759a5] text-[13px]" aria-hidden="true">✓</span>Simulasi seleksi standar TOKI</li>
+            <li class="flex min-h-[42px] min-[720px]:min-h-12 items-center gap-3 px-3.5 border border-[#dce7f1] rounded-[7px] bg-[rgb(255_255_255/78%)] text-[#182f50] text-[13px] font-bold"><span class="grid w-[22px] aspect-square flex-none place-items-center rounded-[6px] bg-[#e3eef8] text-[#1e6fd9] text-sm font-extrabold" aria-hidden="true">✓</span>Pre-test &amp; pemetaan kompetensi</li>
+            <li class="flex min-h-[42px] min-[720px]:min-h-12 items-center gap-3 px-3.5 border border-[#dce7f1] rounded-[7px] bg-[rgb(255_255_255/78%)] text-[#182f50] text-[13px] font-bold"><span class="grid w-[22px] aspect-square flex-none place-items-center rounded-[6px] bg-[#e3eef8] text-[#1e6fd9] text-sm font-extrabold" aria-hidden="true">✓</span>Materi sesuai kebutuhanmu</li>
+            <li class="flex min-h-[42px] min-[720px]:min-h-12 items-center gap-3 px-3.5 border border-[#dce7f1] rounded-[7px] bg-[rgb(255_255_255/78%)] text-[#182f50] text-[13px] font-bold"><span class="grid w-[22px] aspect-square flex-none place-items-center rounded-[6px] bg-[#e3eef8] text-[#1e6fd9] text-sm font-extrabold" aria-hidden="true">✓</span>Simulasi seleksi standar TOKI</li>
           </ul>
         </div>
       </section>
 
       <section id="register-form" class="flex items-center justify-center px-[18px] pt-4 pb-[42px] min-[720px]:justify-start min-[720px]:px-6 min-[720px]:py-8 min-[950px]:px-[clamp(28px,5.4vw,78px)] min-[950px]:py-[42px] bg-[#f0f5fb]">
         <div class="w-full max-w-[440px] mx-auto p-6 px-5 min-[720px]:px-6 min-[950px]:p-[30px] border border-[#dce4ed] rounded-[9px] bg-white shadow-[0_12px_35px_rgb(21_48_80/7%)] anim-b">
-          <div class="mb-[23px]">
-            <p class="text-[#0759a5] text-[11px] font-extrabold mb-2 tracking-[0.7px]">MULAI PERJALANANMU</p>
-            <h2 class="text-[#172033] text-[22px] font-extrabold">Daftar Akun Baru</h2>
-            <p class="mt-[7px] text-[#68758a] text-[13px]">Buat akun untuk mulai mempersiapkan diri.</p>
-          </div>
+          <h2 class="mb-[23px] text-[#172033] text-[22px] font-extrabold">Daftar Akun Baru</h2>
 
           <form class="grid gap-[13px]" @submit.prevent="daftar">
             <div class="grid gap-1.5">
               <label for="nama" class="text-[#182238] text-xs font-[750]">Nama Lengkap <span class="text-[#c54c45]">*</span></label>
-              <input id="nama" v-model="nama" autocomplete="name" type="text" placeholder="Masukkan nama lengkap" :aria-invalid="Boolean(namaError)" :aria-describedby="namaError ? 'nama-error' : undefined" class="w-full min-h-[42px] px-3 border border-[#d6e0eb] rounded-md outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
+              <input id="nama" v-model="nama" autocomplete="name" type="text" placeholder="Masukkan nama lengkap" :aria-invalid="Boolean(namaError)" :aria-describedby="namaError ? 'nama-error' : undefined" class="w-full min-h-12 px-3.5 border border-[#d6e0eb] rounded-[10px] outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
               <small v-if="namaError" id="nama-error" class="text-[11px] text-[#b33a35]">{{ namaError }}</small>
             </div>
 
             <div class="grid gap-1.5">
               <label for="email" class="text-[#182238] text-xs font-[750]">Email Aktif <span class="text-[#c54c45]">*</span></label>
-              <input id="email" v-model="email" autocomplete="email" type="email" placeholder="nama@sekolah.sch.id" :aria-invalid="Boolean(emailError)" :aria-describedby="emailError ? 'email-error' : undefined" class="w-full min-h-[42px] px-3 border border-[#d6e0eb] rounded-md outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
+              <input id="email" v-model="email" autocomplete="email" type="email" placeholder="nama@sekolah.sch.id" :aria-invalid="Boolean(emailError)" :aria-describedby="emailError ? 'email-error' : undefined" class="w-full min-h-12 px-3.5 border border-[#d6e0eb] rounded-[10px] outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
               <small v-if="emailError" id="email-error" class="text-[11px] text-[#b33a35]">{{ emailError }}</small>
             </div>
 
             <div class="grid gap-1.5">
               <label for="password" class="text-[#182238] text-xs font-[750]">Kata Sandi <span class="text-[#c54c45]">*</span></label>
-              <input id="password" v-model="password" autocomplete="new-password" type="password" placeholder="Buat kata sandi" :aria-invalid="Boolean(passwordError)" :aria-describedby="passwordError ? 'password-error' : 'password-hint'" class="w-full min-h-[42px] px-3 border border-[#d6e0eb] rounded-md outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
+              <div class="relative">
+                <input id="password" v-model="password" autocomplete="new-password" :type="showPw ? 'text' : 'password'" placeholder="Kombinasi minimal 8 karakter" :aria-invalid="Boolean(passwordError)" :aria-describedby="passwordError ? 'password-error' : 'password-hint'" class="w-full min-h-12 pl-3.5 pr-11 border border-[#d6e0eb] rounded-[10px] outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
+                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0759a5]" :aria-label="showPw ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'" @click="showPw = !showPw">
+                  <svg v-if="!showPw" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                  <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.6 10.6 0 0 1 12 19c-6.5 0-10-7-10-7a17.6 17.6 0 0 1 4.06-4.94M9.9 4.24A9.5 9.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-2.16 3.19M14.12 14.12A3 3 0 1 1 9.88 9.88" /><line x1="2" y1="2" x2="22" y2="22" /></svg>
+                </button>
+              </div>
               <small v-if="passwordError" id="password-error" class="text-[11px] text-[#b33a35]">{{ passwordError }}</small>
               <small v-else id="password-hint" class="text-[11px] text-[#68758a]">Minimal 8 karakter, kombinasi huruf dan angka</small>
             </div>
 
             <div class="grid gap-1.5">
               <label for="konfirmasi" class="text-[#182238] text-xs font-[750]">Konfirmasi Kata Sandi <span class="text-[#c54c45]">*</span></label>
-              <input id="konfirmasi" v-model="konfirmasi" autocomplete="new-password" type="password" placeholder="Ulangi kata sandi Anda" :aria-invalid="Boolean(konfirmasiError)" :aria-describedby="konfirmasiError ? 'konfirmasi-error' : undefined" class="w-full min-h-[42px] px-3 border border-[#d6e0eb] rounded-md outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
+              <div class="relative">
+                <input id="konfirmasi" v-model="konfirmasi" autocomplete="new-password" :type="showKonfirmasi ? 'text' : 'password'" placeholder="Ulangi kata sandi Anda" :aria-invalid="Boolean(konfirmasiError)" :aria-describedby="konfirmasiError ? 'konfirmasi-error' : undefined" class="w-full min-h-12 pl-3.5 pr-11 border border-[#d6e0eb] rounded-[10px] outline-none bg-white text-[#17233b] font-inherit text-[13px] placeholder:text-[#95a5aa] focus:border-[#0759a5] focus:shadow-[0_0_0_3px_rgb(11_104_189/11%)] aria-invalid:border-[#c54c45]" />
+                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0759a5]" :aria-label="showKonfirmasi ? 'Sembunyikan konfirmasi' : 'Tampilkan konfirmasi'" @click="showKonfirmasi = !showKonfirmasi">
+                  <svg v-if="!showKonfirmasi" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                  <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.6 10.6 0 0 1 12 19c-6.5 0-10-7-10-7a17.6 17.6 0 0 1 4.06-4.94M9.9 4.24A9.5 9.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-2.16 3.19M14.12 14.12A3 3 0 1 1 9.88 9.88" /><line x1="2" y1="2" x2="22" y2="22" /></svg>
+                </button>
+              </div>
               <small v-if="konfirmasiError" id="konfirmasi-error" class="text-[11px] text-[#b33a35]">{{ konfirmasiError }}</small>
             </div>
 
