@@ -89,6 +89,3 @@ onMounted(() => {
     </main>
   </div>
 </template>
-
-
-<style src="@/assets/app.css"></style>

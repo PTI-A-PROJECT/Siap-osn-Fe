@@ -136,7 +136,3 @@ async function daftar() {
     </main>
   </div>
 </template>
-
-
-
-<style src="@/assets/register.css"></style>

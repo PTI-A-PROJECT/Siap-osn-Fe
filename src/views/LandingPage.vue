@@ -31,5 +31,3 @@ const navLinks = [
     <PublicFooter />
   </div>
 </template>
-
-<style src="@/assets/landing.css"></style>

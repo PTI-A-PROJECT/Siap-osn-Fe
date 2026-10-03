@@ -183,6 +183,3 @@ function masukGoogle() {
     </main>
   </div>
 </template>
-
-
-<style src="@/assets/login.css"></style>

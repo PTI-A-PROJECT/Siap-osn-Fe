@@ -252,6 +252,3 @@ async function logout() {
     </div>
   </div>
 </template>
-
-
-<style src="@/assets/profile.css"></style>
