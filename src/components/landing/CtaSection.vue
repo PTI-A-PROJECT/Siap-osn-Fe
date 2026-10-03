@@ -15,8 +15,6 @@
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .cta {
   padding: 72px 0;

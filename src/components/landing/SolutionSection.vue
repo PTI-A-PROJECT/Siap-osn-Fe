@@ -37,8 +37,6 @@ const priorities = [
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .priority-card {
   background: #fff;

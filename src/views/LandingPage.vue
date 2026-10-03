@@ -32,44 +32,4 @@ const navLinks = [
   </div>
 </template>
 
-<style scoped>
-
-.lp {
-  --navy: #0a1d3d;
-  --navy-2: #0e2a52;
-  --navy-3: #12284f;
-  --ink: #0f1b33;
-  --muted: #5b6784;
-  --soft: #edf0f8;
-  --line: #e3e7f0;
-  --blue: #3b82f6;
-  --yellow: #f5c96a;
-  --green: #38b27a;
-  --radius: 10px;
-
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: var(--ink);
-  line-height: 1.55;
-  -webkit-font-smoothing: antialiased;
-}
-.lp *,
-.lp *::before,
-.lp *::after {
-  box-sizing: border-box;
-}
-.lp h1,
-.lp h2,
-.lp h3 {
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  line-height: 1.15;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-.lp p {
-  margin: 0;
-}
-.lp a:not(.btn) {
-  color: inherit;
-  text-decoration: none;
-}
-</style>
+<style src="@/assets/landing.css"></style>

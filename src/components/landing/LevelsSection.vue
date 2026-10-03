@@ -27,8 +27,6 @@ const levels = [
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .lp .levels__lead {
   text-align: center;

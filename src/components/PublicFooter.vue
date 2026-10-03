@@ -50,8 +50,6 @@ const footerColumns = [
     </footer>
 </template>
 
-<style scoped src="./landing/shared.css"></style>
-
 <style scoped>
 .footer {
   background: var(--navy);

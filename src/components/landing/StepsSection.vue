@@ -38,8 +38,6 @@ const steps = [
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .light {
   color: #fff;

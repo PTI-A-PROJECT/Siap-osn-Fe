@@ -35,8 +35,6 @@
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .network {
   background: var(--soft);

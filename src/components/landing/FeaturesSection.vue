@@ -50,8 +50,6 @@ const features = [
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .features {
   display: grid;

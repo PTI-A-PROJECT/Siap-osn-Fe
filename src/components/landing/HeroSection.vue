@@ -65,8 +65,6 @@ const competencies = [
     </section>
 </template>
 
-<style scoped src="./shared.css"></style>
-
 <style scoped>
 .hero {
   background: linear-gradient(180deg, var(--navy) 0%, #0b2245 100%);
