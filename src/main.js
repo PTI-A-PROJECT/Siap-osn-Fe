@@ -5,7 +5,6 @@ import Aura from '@primeuix/themes/aura'
 import ToastService from 'primevue/toastservice'
 
 import './assets/main.css'
-import './assets/global.css'
 import App from './App.vue'
 import router from './router'
 
