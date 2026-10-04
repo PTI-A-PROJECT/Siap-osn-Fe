@@ -12,7 +12,7 @@
       <h1
         class="mb-5 text-[#10294a] text-[42px] min-[720px]:text-[52px] font-extrabold leading-[1.03] font-['Space_Grotesk']"
       >
-        Selamat Datang!
+        Selamat Datang Kembali!
       </h1>
 
       <p
