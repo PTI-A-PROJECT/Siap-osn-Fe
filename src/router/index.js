@@ -16,6 +16,7 @@ const SiswaProfileView = () => import('@/views/siswa/ProfileView.vue')
 const SiswaPretestView = () => import('@/views/siswa/PretestView.vue')
 const PemetaanKompetensiView = () => import('@/views/siswa/PemetaanKompetensiView.vue')
 const SimulasiView = () => import('@/views/siswa/SimulasiView.vue')
+const RiwayatView = () => import('@/views/siswa/RiwayatView.vue')
 const PlaceholderView = () => import('@/views/siswa/PlaceholderView.vue')
 const AdminDashboardView = () => import('@/views/admin/DashboardView.vue')
 const ForbiddenView = () => import('@/views/ForbiddenView.vue')
@@ -113,7 +114,7 @@ export const routes = [
       {
         path: 'siswa/riwayat',
         name: 'siswa.riwayat',
-        component: PlaceholderView,
+        component: RiwayatView,
         meta: { requiresAuth: true, role: 'siswa', title: 'Riwayat Hasil' },
       },
       {
