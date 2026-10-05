@@ -10,7 +10,7 @@ export const ENDPOINTS = {
     profile: '/auth/profile',
   },
   siswa: {
-    dashboard: '/siswa/dashboard',
+    dashboard: '/dashboard',
   },
   admin: {
     ping: '/admin/ping',

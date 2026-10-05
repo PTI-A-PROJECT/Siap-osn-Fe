@@ -170,19 +170,12 @@ const hasil = computed(() => {
     return null
   }
 
-  const total = h.benar + h.salah
-
   return {
     ...h,
-    total,
-    persen: total
-      ? Math.round((h.benar / total) * 100)
-      : 0,
+    persen: h.nilai ?? 0,
     tanggalLabel: formatTanggal(h.tanggal),
-    durasiLabel:
-      h.durasiMenit == null
-        ? '-'
-        : `${h.durasiMenit}m`,
+    nilaiLabel: h.nilai == null ? '-' : String(h.nilai),
+    statusLabel: h.lulus ? 'Lulus' : 'Selesai',
   }
 })
 
@@ -776,8 +769,7 @@ const dash = computed(() => {
                 class="mt-1 text-[13px] text-[#6b778c]"
               >
                 {{ hasil.tanggalLabel }} ·
-                {{ hasil.benar }} dari
-                {{ hasil.total }} benar
+                {{ hasil.statusLabel }}
               </p>
             </div>
           </div>
@@ -785,17 +777,17 @@ const dash = computed(() => {
           <!-- Statistik hasil -->
 
           <div
-            class="grid flex-1 grid-cols-3 gap-3"
+            class="grid flex-1 grid-cols-2 gap-3"
           >
             <div
               class="rounded-xl bg-[#f3f6fb] py-3 text-center"
             >
               <p class="text-lg font-bold">
-                {{ hasil.benar }}
+                {{ hasil.nilaiLabel }}
               </p>
 
               <p class="text-xs text-[#6b778c]">
-                Benar
+                Nilai
               </p>
             </div>
 
@@ -803,23 +795,11 @@ const dash = computed(() => {
               class="rounded-xl bg-[#f3f6fb] py-3 text-center"
             >
               <p class="text-lg font-bold">
-                {{ hasil.salah }}
+                {{ hasil.statusLabel }}
               </p>
 
               <p class="text-xs text-[#6b778c]">
-                Salah
-              </p>
-            </div>
-
-            <div
-              class="rounded-xl bg-[#f3f6fb] py-3 text-center"
-            >
-              <p class="text-lg font-bold">
-                {{ hasil.durasiLabel }}
-              </p>
-
-              <p class="text-xs text-[#6b778c]">
-                Durasi
+                Status
               </p>
             </div>
           </div>
