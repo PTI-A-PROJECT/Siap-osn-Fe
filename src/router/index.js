@@ -17,6 +17,8 @@ const SiswaPretestView = () => import('@/views/siswa/PretestView.vue')
 const PemetaanKompetensiView = () => import('@/views/siswa/PemetaanKompetensiView.vue')
 const SimulasiView = () => import('@/views/siswa/SimulasiView.vue')
 const RiwayatView = () => import('@/views/siswa/RiwayatView.vue')
+const MateriView = () => import('@/views/siswa/MateriView.vue')
+const LatihanView = () => import('@/views/siswa/LatihanView.vue')
 const PlaceholderView = () => import('@/views/siswa/PlaceholderView.vue')
 const AdminDashboardView = () => import('@/views/admin/DashboardView.vue')
 const ForbiddenView = () => import('@/views/ForbiddenView.vue')
@@ -96,8 +98,14 @@ export const routes = [
       {
         path: 'siswa/materi',
         name: 'siswa.materi',
-        component: PlaceholderView,
+        component: MateriView,
         meta: { requiresAuth: true, role: 'siswa', title: 'Materi' },
+      },
+      {
+        path: 'siswa/latihan/:quizId',
+        name: 'siswa.latihan',
+        component: LatihanView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Latihan' },
       },
       {
         path: 'siswa/progress',

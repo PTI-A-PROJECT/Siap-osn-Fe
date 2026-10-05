@@ -1,7 +1,9 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { dashboardKosong } from '@/services/mappers/dashboard.js'
+import { belajarService } from '@/services/belajar.js'
 import { siswaService } from '@/services/siswa.js'
+import { usePretestStore } from '@/stores/pretest.js'
 import { useRiwayatStore } from '@/stores/riwayat.js'
 
 // Satu sumber data untuk semua angka di dashboard siswa dan streak di sidebar.
@@ -54,6 +56,9 @@ export const useProgressStore = defineStore('progress', () => {
             data.value = { ...data.value, riwayat: items }
           })
           .catch(() => {})
+        // Statistik materi (P3): agregat daftar materi semua tingkat terbuka.
+        // Gagal dimuat -> angka tetap nol (kartu statistik punya kondisi kosong).
+        muatStatistikMateri(signal)
       })
       .catch(() => {
         // Data lama dibiarkan agar tampilan tidak salah menunjukkan "belum ada progres".
@@ -68,9 +73,39 @@ export const useProgressStore = defineStore('progress', () => {
     return inflight
   }
 
+  // Agregat materi untuk kartu statistik + kompetensi + rekomendasi.
+  // Dipanggil fire-and-forget dari fetchDashboard; selalu aman gagal.
+  async function muatStatistikMateri(signal) {
+    try {
+      const pretest = usePretestStore()
+      await pretest.muatTingkat()
+      if (signal.aborted) return
+      const ids = pretest.tingkatList.filter((t) => t.terbuka).map((t) => t.id)
+      const perTingkat = await Promise.all(ids.map((id) => belajarService.daftar({ tingkatId: id, signal })))
+      if (signal.aborted) return
+      const semua = perTingkat.flat()
+      data.value = {
+        ...data.value,
+        materiSelesai: semua.filter((m) => m.progress?.status === 'selesai').length,
+        materiTotal: semua.length,
+        kompetensi: semua
+          .filter((m) => m.nilaiTerbaik != null)
+          .map((m) => ({ nama: m.judul, skor: Math.round(m.nilaiTerbaik), target: null })),
+        rekomendasi: semua
+          .filter((m) => m.wajib)
+          .map((m) => ({
+            judul: m.judul,
+            sub: m.prioritas ? `Prioritas ${m.prioritas}` : 'Wajib dipelajari',
+            badge: 'Wajib',
+          })),
+      }
+    } catch {
+      // Biarkan nol/kosong — UI menampilkan kondisi kosong.
+    }
+  }
+
   // Wajib dipanggil saat login/logout supaya data siswa sebelumnya tidak terlihat akun berikutnya.
-  function $reset() {
-    controller?.abort()
+  function $reset() {    controller?.abort()
     controller = null
     inflight = null
     dimuatPada = 0
