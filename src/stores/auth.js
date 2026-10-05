@@ -1,11 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { authService } from '@/services/auth.js'
-import { useLatihanStore } from '@/stores/latihan.js'
-import { useMateriStore } from '@/stores/materi.js'
-import { usePretestStore } from '@/stores/pretest.js'
 import { useProgressStore } from '@/stores/progress.js'
-import { useRiwayatStore } from '@/stores/riwayat.js'
 
 // Store tidak tahu HTTP/backend: token persisten + request lewat
 // authService, bentuk user dari services/mappers/user.js.
@@ -56,18 +52,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Pastikan tidak ada sisa data akun sebelumnya (dipakai login/logout/$reset).
-  function resetDataAkun() {
-    useProgressStore().$reset()
-    usePretestStore().$reset()
-    useRiwayatStore().$reset()
-    useMateriStore().$reset()
-    useLatihanStore().$reset()
-  }
-
   async function login(payload) {
     const res = await authService.login(payload)
-    resetDataAkun()
+    useProgressStore().$reset() // pastikan tidak ada sisa data akun sebelumnya
     saveToken(res.token)
     user.value = res.user
     return user.value
@@ -98,7 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       user.value = null
       saveToken(null)
-      resetDataAkun()
+      useProgressStore().$reset()
     }
   }
 
@@ -106,7 +93,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     initialized.value = false
     saveToken(null)
-    resetDataAkun()
+    useProgressStore().$reset()
   }
 
   return {
