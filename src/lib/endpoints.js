@@ -11,6 +11,11 @@ export const ENDPOINTS = {
   },
   siswa: {
     dashboard: '/dashboard',
+    tingkat: '/tingkat',
+    pretestMulai: '/pretest',
+    pretest: (id) => `/pretest/${id}`,
+    pretestJawaban: (id) => `/pretest/${id}/jawaban`,
+    pretestSubmit: (id) => `/pretest/${id}/submit`,
   },
   admin: {
     ping: '/admin/ping',
