@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { authService } from '@/services/auth.js'
 import { usePretestStore } from '@/stores/pretest.js'
 import { useProgressStore } from '@/stores/progress.js'
+import { useRiwayatStore } from '@/stores/riwayat.js'
 
 // Store tidak tahu HTTP/backend: token persisten + request lewat
 // authService, bentuk user dari services/mappers/user.js.
@@ -57,6 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
     const res = await authService.login(payload)
     useProgressStore().$reset() // pastikan tidak ada sisa data akun sebelumnya
     usePretestStore().$reset()
+    useRiwayatStore().$reset()
     saveToken(res.token)
     user.value = res.user
     return user.value
@@ -89,6 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
       saveToken(null)
       useProgressStore().$reset()
       usePretestStore().$reset()
+      useRiwayatStore().$reset()
     }
   }
 
@@ -98,6 +101,7 @@ export const useAuthStore = defineStore('auth', () => {
     saveToken(null)
     useProgressStore().$reset()
     usePretestStore().$reset()
+    useRiwayatStore().$reset()
   }
 
   return {

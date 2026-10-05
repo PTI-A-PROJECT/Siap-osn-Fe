@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { dashboardKosong } from '@/services/mappers/dashboard.js'
 import { siswaService } from '@/services/siswa.js'
+import { useRiwayatStore } from '@/stores/riwayat.js'
 
 // Satu sumber data untuk semua angka di dashboard siswa dan streak di sidebar.
 // Kontrak API + bentuk data: services/mappers/dashboard.js.
@@ -44,6 +45,15 @@ export const useProgressStore = defineStore('progress', () => {
         }
         loaded.value = true
         dimuatPada = Date.now()
+        // Cuplikan riwayat terbaru: opsional — gagal dimuat tidak menandai
+        // error dashboard (bagian ini punya kondisi kosong sendiri).
+        useRiwayatStore()
+          .terbaris()
+          .then((items) => {
+            if (signal.aborted) return
+            data.value = { ...data.value, riwayat: items }
+          })
+          .catch(() => {})
       })
       .catch(() => {
         // Data lama dibiarkan agar tampilan tidak salah menunjukkan "belum ada progres".

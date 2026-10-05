@@ -16,6 +16,7 @@ export const ENDPOINTS = {
     pretest: (id) => `/pretest/${id}`,
     pretestJawaban: (id) => `/pretest/${id}/jawaban`,
     pretestSubmit: (id) => `/pretest/${id}/submit`,
+    riwayat: '/riwayat',
   },
   admin: {
     ping: '/admin/ping',

@@ -7,6 +7,10 @@ vi.mock('@/services/siswa.js', () => ({
   siswaService: { dashboard: vi.fn() },
 }))
 
+vi.mock('@/stores/riwayat.js', () => ({
+  useRiwayatStore: () => ({ terbaris: vi.fn(async () => []) }),
+}))
+
 const hasil = { preTestSelesai: false, materiSelesai: 0, materiTotal: 0 }
 
 beforeEach(() => {
@@ -19,7 +23,7 @@ describe('progress store', () => {
     siswaService.dashboard.mockResolvedValue(hasil)
     const progress = useProgressStore()
     await progress.fetchDashboard()
-    expect(progress.data).toEqual(hasil)
+    expect(progress.data).toEqual({ ...hasil, riwayat: [] })
     expect(progress.loaded).toBe(true)
     expect(progress.loading).toBe(false)
   })
