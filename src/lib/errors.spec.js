@@ -37,4 +37,14 @@ describe('pesanError', () => {
     const err = { response: { status: 500, data: { message: 'Server Error' } } }
     expect(pesanError(err, 'Gagal menyimpan')).toBe('Gagal menyimpan')
   })
+
+  it('kode bisnis backend diterjemahkan', () => {
+    const err = (kode, status = 409) => ({ response: { status, data: { message: 'x', kode, detail: '' } } })
+    expect(pesanError(err('TINGKAT_TERKUNCI', 403))).toBe('Tingkat ini belum terbuka untukmu')
+    expect(pesanError(err('SUDAH_LULUS'))).toBe('Kamu sudah lulus tingkat ini')
+    expect(pesanError(err('BANK_SOAL_TIDAK_CUKUP', 503), 'Gagal')).toBe(
+      'Bank soal belum mencukupi, coba lagi nanti',
+    )
+    expect(pesanError(err('KODE_ASING'))).toBe('x')
+  })
 })
