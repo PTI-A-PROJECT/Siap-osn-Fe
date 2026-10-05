@@ -17,6 +17,13 @@ export const ENDPOINTS = {
     pretestJawaban: (id) => `/pretest/${id}/jawaban`,
     pretestSubmit: (id) => `/pretest/${id}/submit`,
     riwayat: '/riwayat',
+    materi: '/materi',
+    materiDetail: (id) => `/materi/${id}`,
+    materiProgress: (id) => `/materi/${id}/progress`,
+    quizMulai: (quizId) => `/quiz/${quizId}/mulai`,
+    pengerjaan: (id) => `/quiz-pengerjaan/${id}`,
+    pengerjaanJawaban: (id) => `/quiz-pengerjaan/${id}/jawaban`,
+    pengerjaanSubmit: (id) => `/quiz-pengerjaan/${id}/submit`,
   },
   admin: {
     ping: '/admin/ping',
