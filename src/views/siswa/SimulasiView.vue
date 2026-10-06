@@ -3,133 +3,169 @@ import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import UserMenu from '@/components/UserMenu.vue'
+import { usePretestStore } from '@/stores/pretest.js'
+import { useProgressStore } from '@/stores/progress.js'
+import { useSimulasiStore } from '@/stores/simulasi.js'
+import { pesanError } from '@/lib/errors.js'
+
+// Lobi simulasi. Tingkat, daftar simulasi, dan syarat semuanya dari backend;
+// tidak ada data mock lagi. Modal aturan dipertahankan dari versi sebelumnya.
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const pretest = usePretestStore()
+const progress = useProgressStore()
+const simulasi = useSimulasiStore()
 
-// --- Data (masih mock; nantinya diganti data dari API) ---
-// Tambahkan { key: 'nasional', status: 'terkunci', ... } bila ingin menampilkan level terkunci.
-const levels = [
-  { key: 'kabupaten', nama: 'Kabupaten', status: 'selesai', kode: 'OSN-K 2026', label: 'Sudah Dilalui',
-    desc: 'Fondasi dasar Informatika. Kamu sudah menuntaskan tingkat ini.', soal: 25, menit: 60 },
-  { key: 'provinsi', nama: 'Provinsi', status: 'berjalan', kode: 'OSN-P 2026', label: 'Sedang Berjalan',
-    desc: 'Standar soal meningkat mengikuti seleksi tingkat provinsi.', soal: 30, menit: 90 },
-]
+/* ---------- Tingkat ---------- */
+const levels = computed(() => pretest.tingkatList)
+const levelDipilihId = ref(null)
+const levelDipilih = computed(() => levels.value.find((l) => l.id === levelDipilihId.value) ?? null)
+const sudahLulus = computed(() => levelDipilih.value?.tahap === 'LULUS')
+// Percobaan yang sedang berjalan: tombol menjadi "Lanjutkan".
+const simulasiBerjalan = computed(() => levelDipilih.value?.tahap === 'SIMULASI_BERJALAN')
 
-const hasil = {
-  skor: 74,
-  judul: 'Simulasi Seleksi — Tingkat Provinsi',
-  meta: '22 September 2026 · 25 dari 30 benar · Durasi 78 menit',
-  stats: [
-    { nilai: '25', label: 'Benar' },
-    { nilai: '5', label: 'Salah' },
-    { nilai: '78m', label: 'Durasi' },
-    { nilai: '+5', label: 'Dari sebelumnya' },
-  ],
+/* ---------- Simulasi di tingkat terpilih ---------- */
+const daftarSimulasi = computed(() => simulasi.daftar)
+const syarat = computed(() => simulasi.syarat)
+
+function alasanMulaiNonaktif(s) {
+  if (!s.aktif) return 'Simulasi ini sedang tidak aktif.'
+  if (!syarat.value?.terpenuhi) return 'Syarat simulasi belum terpenuhi.'
+  if (s.sisaKuota === 0) return 'Kuota simulasi untuk putaran ini sudah habis.'
+  return ''
+}
+function bisaMulai(s) {
+  return alasanMulaiNonaktif(s) === ''
 }
 
-// Ringkasan pembahasan: nomor soal yang dijawab salah (sisanya benar)
-const pembahasan = {
-  total: 30,
-  salah: [4, 7, 15, 18, 26],
-  judul: 'Dari simulasi Tingkat Provinsi · 22 September 2026',
+function pilihLevel(l) {
+  if (!l.terbuka) return
+  levelDipilihId.value = l.id
+  simulasi.muatRuang({ tingkatId: l.id }).catch(() => {})
 }
 
-const kotak = computed(() =>
-  Array.from({ length: pembahasan.total }, (_, i) => ({
-    no: i + 1,
-    benar: !pembahasan.salah.includes(i + 1),
-  }))
-)
+/* ---------- Syarat ---------- */
+function syaratTerpenuhi(r) {
+  return r.selesai && (!r.latihanTersedia || (r.nilaiLatihan ?? 0) >= r.batas)
+}
+function labelSyarat(r) {
+  const parts = []
+  parts.push(r.selesai ? 'Materi selesai' : 'Belum tandai selesai')
+  if (r.latihanTersedia) {
+    parts.push(
+      (r.nilaiLatihan ?? 0) >= r.batas
+        ? `Nilai latihan ${Math.round(r.nilaiLatihan)} ≥ ${r.batas}`
+        : `Nilai latihan ${r.nilaiLatihan == null ? 'belum ada' : Math.round(r.nilaiLatihan)} < ${r.batas}`,
+    )
+  } else {
+    parts.push('Latihan belum tersedia')
+  }
+  return parts
+}
 
-const jumlahSalah = computed(() => pembahasan.salah.length)
-const jumlahBenar = computed(() => pembahasan.total - jumlahSalah.value)
+function kePretest() {
+  router.push({ name: 'siswa.pretest' })
+}
+function keMateri() {
+  router.push({ name: 'siswa.materi' })
+}
 
-// Lingkaran skor (SVG)
+/* ---------- Hasil terakhir ---------- */
+const hasilTerakhir = computed(() => progress.data.hasilTerakhir)
+const skor = computed(() => {
+  const n = hasilTerakhir.value?.nilai
+  return n == null ? 0 : Math.max(0, Math.min(100, n))
+})
 const R = 36
 const keliling = 2 * Math.PI * R
-const offset = computed(() => keliling * (1 - hasil.skor / 100))
+const offset = computed(() => keliling * (1 - skor.value / 100))
 
-// --- Modal detail simulasi ---
+function formatTanggal(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+/* ---------- Modal aturan ---------- */
 const modalTerbuka = ref(false)
-const levelDipilih = ref(null)
+const simulasiDipilih = ref(null)
 const setuju = ref(false)
 const modalEl = ref(null)
 
 const aturan = computed(() => {
-  const menit = levelDipilih.value?.menit ?? 0
+  const menit = simulasiDipilih.value?.durasiMenit ?? 0
   return [
-    { judul: 'Timer Berjalan Otomatis',
-      isi: 'Timer mulai berjalan langsung setelah simulasi dimulai dan tidak dapat dijeda atau dihentikan sementara.' },
-    { judul: 'Penyimpanan Jawaban Otomatis (Autosave)',
-      isi: 'Setiap opsi yang kamu klik akan otomatis tersimpan langsung ke server evaluasi secara real-time.' },
-    { judul: 'Navigasi Bebas Antarsoal',
-      isi: 'Kamu bebas berpindah antarsoal kapan saja melalui panel nomor soal di sisi kanan ruang ujian.' },
-    { judul: 'Pengumpulan Otomatis oleh Sistem',
-      isi: `Simulasi akan dikumpulkan secara otomatis oleh sistem tepat saat waktu ${menit} menit habis.` },
-    { judul: 'Kestabilan Koneksi Jaringan',
-      isi: 'Pastikan koneksi internet tetap aktif dan stabil selama pengerjaan untuk menghindari keterlambatan sinkronisasi data.' },
+    { judul: 'Timer Berjalan Otomatis', isi: 'Timer dihitung dari batas waktu server dan berjalan sejak simulasi dimulai. Reload tidak menambah waktu.' },
+    { judul: 'Penyimpanan Jawaban Otomatis (Autosave)', isi: 'Setiap jawaban yang kamu isi otomatis tersimpan ke server. Killing internet tidak menghapus jawaban yang sudah terkirim.' },
+    { judul: 'Navigasi Bebas Antarsoal', isi: 'Kamu bebas berpindah antarsoal kapan saja melalui panel nomor soal.' },
+    { judul: 'Pengumpulan Otomatis oleh Sistem', isi: `Simulasi dikumpulkan otomatis tepat saat waktu ${menit} menit habis.` },
+    { judul: 'Kestabilan Koneksi Jaringan', isi: 'Pastikan koneksi internet tetap aktif dan stabil selama pengerjaan.' },
   ]
 })
 
-function bukaModal(level) {
-  levelDipilih.value = level
+function bukaModal(s) {
+  simulasiDipilih.value = s
   setuju.value = false
   modalTerbuka.value = true
 }
-
 function tutupModal() {
   modalTerbuka.value = false
 }
-
 function mulaiUjian() {
-  if (!setuju.value || !levelDipilih.value) return
-
-  const level = levelDipilih.value
+  if (!setuju.value || !simulasiDipilih.value) return
+  const s = simulasiDipilih.value
   modalTerbuka.value = false
-
-  // Halaman ujian belum dibuat. Kalau nanti ada route 'siswa.ujian', otomatis dipakai.
-  if (router.hasRoute('siswa.ujian')) {
-    router.push({ name: 'siswa.ujian', params: { level: level.key } })
-    return
-  }
-
-  segeraHadir(`Halaman ujian tingkat ${level.nama} belum tersedia.`)
+  router.push({ name: 'siswa.ujian', params: { simulasiId: s.id } })
 }
 
 watch(modalTerbuka, (buka) => {
   document.body.style.overflow = buka ? 'hidden' : ''
   if (buka) nextTick(() => modalEl.value?.focus())
 })
-
 function onKeydown(e) {
   if (e.key === 'Escape' && modalTerbuka.value) tutupModal()
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+/* ---------- Navigasi ---------- */
+function lihatRiwayat() {
+  router.push({ name: 'siswa.riwayat' })
+}
+function lihatHasil(hasilId) {
+  if (!hasilId) {
+    lihatRiwayat()
+    return
+  }
+  router.push({ name: 'siswa.simulasi.hasil', params: { hasilId } })
+}
+function lihatPembahasan(hasilId) {
+  if (!hasilId) {
+    lihatRiwayat()
+    return
+  }
+  router.push({ name: 'siswa.simulasi.review', params: { hasilId } })
+}
+
+onMounted(async () => {
+  await progress.fetchDashboard().catch(() => {})
+  try {
+    await pretest.muatTingkat({ force: true })
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Gagal memuat daftar tingkat', detail: pesanError(err), life: 4000 })
+  }
+  // Default: tingkat terbuka pertama yang belum lulus.
+  const kandidat = levels.value.find((l) => l.terbuka && l.tahap !== 'LULUS') ?? levels.value.find((l) => l.terbuka)
+  if (kandidat) pilihLevel(kandidat)
+  window.addEventListener('keydown', onKeydown)
+})
+
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = ''
 })
-
-// --- Navigasi lain ---
-function lihatRiwayat() {
-  router.push({ name: 'siswa.riwayat' })
-}
-
-function lihatPembahasan() {
-  // Kalau nanti ada route 'siswa.pembahasan', otomatis dipakai.
-  if (router.hasRoute('siswa.pembahasan')) {
-    router.push({ name: 'siswa.pembahasan' })
-    return
-  }
-  segeraHadir('Halaman pembahasan soal belum tersedia.')
-}
-
-function segeraHadir(detail) {
-  toast.add({ severity: 'info', summary: 'Segera hadir', detail, life: 3000 })
-}
 </script>
 
 <template>
@@ -147,35 +183,139 @@ function segeraHadir(detail) {
       <section>
         <span class="eyebrow">01 · Pilih Tingkat</span>
         <h2>Pilih Tingkat Simulasi</h2>
-        <p class="sub">Tekan Mulai Simulasi untuk membuka halaman ujian.</p>
+        <p class="sub">Pilih tingkat untuk melihat simulasi dan syarat mengikutinya.</p>
 
         <div class="grid-level">
-          <article v-for="l in levels" :key="l.key" class="kartu level" :class="'is-' + l.status">
-            <span class="badge" :class="'badge-' + l.status">
-              <template v-if="l.status === 'terkunci'">🔒 </template>{{ l.label }}
+          <article
+            v-for="l in levels"
+            :key="l.id"
+            class="kartu level"
+            :class="[
+              !l.terbuka ? 'is-terkunci' : l.tahap === 'LULUS' ? 'is-selesai' : 'is-berjalan',
+              levelDipilihId === l.id ? 'is-dipilih' : '',
+            ]"
+          >
+            <span
+              class="badge"
+              :class="!l.terbuka ? 'badge-terkunci' : l.tahap === 'LULUS' ? 'badge-selesai' : 'badge-berjalan'"
+            >
+              <template v-if="!l.terbuka">🔒 </template>
+              {{ !l.terbuka ? 'Terkunci' : l.tahap === 'LULUS' ? 'Sudah Lulus' : l.tahap === 'SIMULASI_BERJALAN' ? 'Simulasi Berjalan' : 'Tersedia' }}
             </span>
             <h3>{{ l.nama }}</h3>
-            <p class="desc">{{ l.desc }}</p>
-            <div class="info">
-              <span>📝 {{ l.soal }} soal</span>
-              <span>⏱ {{ l.menit }} menit</span>
-            </div>
-            <button v-if="l.status === 'selesai'" type="button" class="btn btn-hijau" @click="lihatRiwayat">Lihat Riwayat</button>
-            <button v-else-if="l.status === 'berjalan'" type="button" class="btn btn-emas" @click="bukaModal(l)">Mulai Simulasi →</button>
-            <button v-else type="button" class="btn btn-mati" disabled>Terkunci</button>
+            <p class="desc">{{ l.deskripsi || 'Tahap seleksi OSN.' }}</p>
+            <div class="info"><span>{{ l.tahap ?? '—' }}</span></div>
+            <button
+              type="button"
+              class="btn"
+              :class="l.terbuka ? 'btn-emas' : 'btn-mati'"
+              :disabled="!l.terbuka"
+              @click="pilihLevel(l)"
+            >
+              {{ l.terbuka ? (l.tahap === 'LULUS' ? 'Lihat Riwayat' : 'Pilih Tingkat') : 'Terkunci' }}
+            </button>
           </article>
         </div>
+
+        <p v-if="!levels.length" class="sub mt-3">Belum ada data tingkat. Coba muat ulang halaman.</p>
       </section>
 
       <hr />
 
-      <!-- 02 Hasil terakhir -->
-      <section>
-        <span class="eyebrow">02 · Hasil Terakhir</span>
-        <h2>Hasil Simulasi Terakhir</h2>
-        <p class="sub">Ringkasan skor dari simulasi yang baru kamu selesaikan.</p>
+      <!-- 02 Simulasi di tingkat terpilih -->
+      <section v-if="levelDipilih">
+        <span class="eyebrow">02 · Simulasi</span>
+        <h2>Simulasi Tingkat {{ levelDipilih.nama }}</h2>
+        <p class="sub">
+          Kuota tersisa: {{ daftarSimulasi[0]?.sisaKuota ?? '—' }} percobaan.
+        </p>
 
-        <div class="kartu hasil">
+        <!-- SYARAT -->
+        <div class="kartu syarat-kartu">
+          <div class="syarat-kepala">
+            <h3>
+              Syarat Mengikuti Simulasi
+              <span class="syarat-status" :class="syarat?.terpenuhi ? 'ok' : 'belum'">
+                {{ syarat?.terpenuhi ? 'Terpenuhi' : 'Belum Terpenuhi' }}
+              </span>
+            </h3>
+            <button type="button" class="btn-link" @click="keMateri">Buka halaman Materi →</button>
+          </div>
+
+          <p v-if="syarat?.alasan === 'belum_pretest'" class="syarat-alasan">
+            Kamu belum menyelesaikan pre-test di tingkat ini.
+            <button type="button" class="btn-link inline" @click="kePretest">Ambil pre-test →</button>
+          </p>
+
+          <ul v-if="syarat?.rincian?.length" class="syarat-daftar">
+            <li
+              v-for="r in syarat.rincian"
+              :key="r.materiId"
+              :class="syaratTerpenuhi(r) ? 'ok' : 'belum'"
+            >
+              <span class="syarat-nama">
+                {{ r.judul }}
+                <em v-if="r.prioritas">· prioritas {{ r.prioritas }}</em>
+              </span>
+              <span class="syarat-butir">
+                <span v-for="(t, i) in labelSyarat(r)" :key="t">
+                  {{ i > 0 ? ' · ' : '' }}{{ t }}
+                </span>
+              </span>
+            </li>
+          </ul>
+          <p v-else-if="syarat && !syarat.rincian.length" class="sub">
+            Tidak ada materi wajib di tingkat ini.
+          </p>
+        </div>
+
+        <!-- DAFTAR SIMULASI -->
+        <div v-if="daftarSimulasi.length" class="grid-simulasi">
+          <article v-for="s in daftarSimulasi" :key="s.id" class="kartu simulasi-kartu">
+            <div class="simulasi-atas">
+              <h3>{{ s.nama }}</h3>
+              <span class="badge" :class="s.aktif ? 'badge-berjalan' : 'badge-terkunci'">
+                {{ s.aktif ? 'Aktif' : 'Tidak Aktif' }}
+              </span>
+            </div>
+            <div class="info">
+              <span>📝 {{ s.jumlahSoal }} soal</span>
+              <span>⏱ {{ s.durasiMenit }} menit</span>
+            </div>
+            <p v-if="alasanMulaiNonaktif(s)" class="simulasi-alasan">{{ alasanMulaiNonaktif(s) }}</p>
+            <button
+              v-if="sudahLulus"
+              type="button"
+              class="btn btn-hijau"
+              @click="lihatRiwayat"
+            >
+              Sudah Lulus — Lihat Riwayat
+            </button>
+            <button
+              v-else
+              type="button"
+              class="btn"
+              :class="bisaMulai(s) ? 'btn-emas' : 'btn-mati'"
+              :disabled="!bisaMulai(s)"
+              @click="bukaModal(s)"
+            >
+              {{ simulasiBerjalan ? 'Lanjutkan Simulasi →' : 'Mulai Simulasi →' }}
+            </button>
+          </article>
+        </div>
+        <p v-else-if="simulasi.loading" class="sub mt-3">Memuat daftar simulasi…</p>
+        <p v-else class="sub mt-3">Belum ada simulasi untuk tingkat ini.</p>
+      </section>
+
+      <hr class="hr-lebar" />
+
+      <!-- 03 Hasil terakhir -->
+      <section>
+        <span class="eyebrow">03 · Hasil Terakhir</span>
+        <h2>Hasil Simulasi Terakhir</h2>
+        <p class="sub">Ringkasan nilai dari simulasi terakhirmu.</p>
+
+        <div v-if="hasilTerakhir" class="kartu hasil">
           <div class="hasil-atas">
             <div class="ring">
               <svg viewBox="0 0 88 88" width="80" height="80" aria-hidden="true">
@@ -183,57 +323,37 @@ function segeraHadir(detail) {
                 <circle cx="44" cy="44" :r="R" fill="none" stroke="#f0a30f" stroke-width="8" stroke-linecap="round"
                   :stroke-dasharray="keliling" :stroke-dashoffset="offset" transform="rotate(-90 44 44)" />
               </svg>
-              <div class="ring-teks"><strong>{{ hasil.skor }}%</strong><small>Skor</small></div>
+              <div class="ring-teks"><strong>{{ Math.round(skor) }}</strong><small>Skor</small></div>
             </div>
             <div>
-              <h3>{{ hasil.judul }}</h3>
-              <p class="meta">{{ hasil.meta }}</p>
+              <h3>{{ hasilTerakhir.judul }}</h3>
+              <p class="meta">{{ formatTanggal(hasilTerakhir.tanggal) }}</p>
+              <p class="meta">
+                {{ hasilTerakhir.lulus ? 'Lulus' : 'Belum lulus' }}
+              </p>
             </div>
           </div>
-          <div class="stats">
-            <div v-for="s in hasil.stats" :key="s.label" class="stat">
-              <strong>{{ s.nilai }}</strong><span>{{ s.label }}</span>
-            </div>
+          <div class="hasil-kaki">
+            <button type="button" class="btn-auto btn-hijau" @click="lihatHasil(hasilTerakhir.id)">
+              Lihat Hasil →
+            </button>
+            <button type="button" class="btn-auto btn-emas" @click="lihatPembahasan(hasilTerakhir.id)">
+              Lihat Pembahasan Soal →
+            </button>
           </div>
         </div>
-      </section>
 
-      <hr class="hr-lebar" />
-
-      <!-- 03 Pembahasan -->
-      <section>
-        <span class="eyebrow">03 · Pembahasan</span>
-        <h2>Pembahasan Soal</h2>
-        <p class="sub">Jawabanmu dibandingkan dengan jawaban benar, lengkap dengan penjelasannya.</p>
-
-        <div class="kartu pembahasan">
-          <div class="pembahasan-info">
-            <h3>{{ pembahasan.total }} soal siap dibahas</h3>
-            <p class="pembahasan-sub">{{ pembahasan.judul }}</p>
-            <div class="kotak-grid" role="list" aria-label="Ringkasan jawaban per soal">
-              <span
-                v-for="k in kotak"
-                :key="k.no"
-                class="kotak"
-                :class="k.benar ? 'kotak-benar' : 'kotak-salah'"
-                role="listitem"
-                :title="`Soal ${k.no}: ${k.benar ? 'benar' : 'salah'}`"
-              />
-            </div>
-            <div class="legenda">
-              <span><i class="titik titik-benar"></i>{{ jumlahBenar }} benar</span>
-              <span><i class="titik titik-salah"></i>{{ jumlahSalah }} salah</span>
-            </div>
-          </div>
-          <button type="button" class="btn btn-emas btn-auto" @click="lihatPembahasan">Lihat Pembahasan Soal →</button>
+        <div v-else class="kartu kosong">
+          <p>Belum ada hasil simulasi. Selesaikan satu simulasi untuk melihat ringkasannya di sini.</p>
+          <button type="button" class="btn-auto btn-emas" @click="lihatRiwayat">Buka Riwayat →</button>
         </div>
       </section>
     </div>
 
-    <!-- Modal detail simulasi -->
+    <!-- Modal aturan simulasi -->
     <Teleport to="body">
       <Transition name="fade-modal">
-        <div v-if="modalTerbuka && levelDipilih" class="overlay" @click.self="tutupModal">
+        <div v-if="modalTerbuka && simulasiDipilih" class="overlay" @click.self="tutupModal">
           <div
             ref="modalEl"
             class="modal"
@@ -250,12 +370,11 @@ function segeraHadir(detail) {
             <div class="grid-info">
               <div class="kartu-info">
                 <span class="label-info">Tingkat Seleksi</span>
-                <b class="nilai-info">{{ levelDipilih.nama }}</b>
-                <span class="kode">{{ levelDipilih.kode }}</span>
+                <b class="nilai-info">{{ levelDipilih?.nama ?? '—' }}</b>
               </div>
               <div class="kartu-info">
                 <span class="label-info">Jumlah Soal</span>
-                <span class="nilai-info"><b>{{ levelDipilih.soal }}</b> Soal</span>
+                <span class="nilai-info"><b>{{ simulasiDipilih.jumlahSoal }}</b> Soal</span>
                 <span class="sub-info">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
                   Bank Soal Acak
@@ -263,19 +382,15 @@ function segeraHadir(detail) {
               </div>
               <div class="kartu-info">
                 <span class="label-info">Durasi Waktu</span>
-                <span class="nilai-info"><b>{{ levelDipilih.menit }}</b> Menit</span>
+                <span class="nilai-info"><b>{{ simulasiDipilih.durasiMenit }}</b> Menit</span>
                 <span class="sub-info">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2M9 2h6" /></svg>
-                  Countdown Statis
+                  Batas Waktu Server
                 </span>
               </div>
               <div class="kartu-info">
-                <span class="label-info">Tipe Soal</span>
-                <b class="nilai-info">Pilihan Ganda</b>
-                <span class="sub-info">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></svg>
-                  5 Opsi (A - E)
-                </span>
+                <span class="label-info">Sisa Kuota</span>
+                <b class="nilai-info">{{ simulasiDipilih.sisaKuota ?? '—' }} percobaan</b>
               </div>
             </div>
 
@@ -352,6 +467,7 @@ hr { border: 0; border-top: 1px solid var(--garis); margin: 32px 0; }
 .grid-level { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
 .level { display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(15, 27, 51, .05); }
 .level.is-berjalan { border: 2px solid var(--emas); padding: 23px; box-shadow: 0 6px 20px rgba(245, 158, 11, .15); }
+.level.is-dipilih { outline: 2px solid var(--emas); outline-offset: 1px; }
 .level h3 { font-size: 20px; margin-top: 8px; }
 .badge { align-self: flex-start; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
 .badge-selesai { background: #e7f6ef; color: var(--hijau); }
@@ -360,6 +476,34 @@ hr { border: 0; border-top: 1px solid var(--garis); margin: 32px 0; }
 .desc { font-size: 13px; color: var(--abu); line-height: 1.5; margin: 0; max-width: 260px; flex: 1; }
 .info { display: flex; flex-wrap: nowrap; gap: 16px; font-size: 13px; color: var(--ink); margin: 6px 0 8px; white-space: nowrap; }
 
+/* Syarat */
+.syarat-kartu { margin-bottom: 24px; }
+.syarat-kepala { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.syarat-kepala h3 { display: flex; align-items: center; gap: 10px; }
+.syarat-status { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; }
+.syarat-status.ok { background: #e7f6ef; color: var(--hijau); }
+.syarat-status.belum { background: #fde8ec; color: var(--merah); }
+.syarat-alasan { margin: 12px 0 0; font-size: 13px; color: #92400e; background: #fdf1d3; padding: 10px 14px; border-radius: 10px; }
+.syarat-daftar { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.syarat-daftar li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  border: 1px solid var(--garis); border-radius: 10px; padding: 10px 14px; font-size: 13px;
+}
+.syarat-daftar li.ok { background: #f7fdfa; border-color: #cdeedd; }
+.syarat-daftar li.belum { background: #fffafb; border-color: #f9c4cf; }
+.syarat-nama { font-weight: 600; }
+.syarat-nama em { font-style: normal; font-weight: 400; color: var(--abu); font-size: 12px; }
+.syarat-butir { color: var(--abu); font-size: 12.5px; }
+.btn-link { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--emas-tua); cursor: pointer; text-decoration: underline; }
+.btn-link.inline { display: inline; }
+
+/* Simulasi */
+.grid-simulasi { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.simulasi-kartu { display: flex; flex-direction: column; gap: 10px; }
+.simulasi-atas { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.simulasi-alasan { margin: 0; font-size: 12.5px; color: #92400e; }
+
+/* Tombol */
 .btn {
   width: 100%; border: 0; border-radius: 10px; padding: 11px 14px;
   font: inherit; font-size: 13px; font-weight: 600; line-height: 1.2; white-space: nowrap; cursor: pointer;
@@ -371,38 +515,21 @@ hr { border: 0; border-top: 1px solid var(--garis); margin: 32px 0; }
 .btn-emas:hover { background: #f7ae2e; }
 .btn-mati { background: #eef1f6; color: var(--abu); cursor: not-allowed; }
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.btn-auto { width: auto; padding: 11px 20px; border-radius: 8px; flex: none; }
+.btn-auto { width: auto; padding: 11px 20px; border-radius: 8px; border: 0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-auto:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 /* Hasil */
 .hasil { padding: 28px; }
 .hasil-atas { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.hasil-kaki { display: flex; gap: 10px; flex-wrap: wrap; }
 .ring { position: relative; width: 80px; height: 80px; flex: none; }
 .ring-teks { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .ring-teks strong { font-size: 17px; line-height: 1.1; }
 .ring-teks small { font-size: 11px; color: var(--abu); }
 .hasil-atas h3 { font-size: 17px; }
 .meta { font-size: 13px; color: var(--abu); margin: 4px 0 0; }
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.stat {
-  background: #fafbfd; border: 1px solid #eef1f6; border-radius: 12px; padding: 18px 8px;
-  text-align: center; display: flex; flex-direction: column; gap: 4px;
-}
-.stat strong { font-size: 22px; line-height: 1.2; }
-.stat span { font-size: 12px; color: var(--abu); }
-
-/* Pembahasan */
-.pembahasan { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.pembahasan-info h3 { font-size: 17px; }
-.pembahasan-sub { font-size: 14px; color: var(--abu); margin: 4px 0 14px; }
-.kotak-grid { display: grid; grid-template-columns: repeat(15, 18px); gap: 5px; max-width: 100%; }
-.kotak { width: 18px; height: 16px; border-radius: 4px; border: 1px solid transparent; }
-.kotak-benar { background: #e7f6ef; border-color: #cdeedd; }
-.kotak-salah { background: #fde8ec; border-color: #f9c4cf; }
-.legenda { display: flex; gap: 16px; margin-top: 10px; font-size: 12.5px; color: var(--abu); }
-.legenda span { display: inline-flex; align-items: center; gap: 6px; }
-.titik { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-.titik-benar { background: #16a34a; }
-.titik-salah { background: var(--merah); }
+.kosong { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.kosong p { margin: 0; font-size: 14px; color: var(--abu); }
 
 /* Modal detail simulasi (dirender di <body>, jadi punya variabel sendiri) */
 .overlay {
@@ -449,10 +576,6 @@ hr { border: 0; border-top: 1px solid var(--garis); margin: 32px 0; }
 .nilai-info { font-size: 13.5px; }
 .nilai-info b, b.nilai-info { font-weight: 700; }
 .sub-info { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #3c4658; }
-.kode {
-  align-self: flex-start; font-size: 11px; font-weight: 500;
-  background: #fdf1d3; color: #92400e; padding: 2px 8px; border-radius: 6px;
-}
 
 .garis-modal { border: 0; border-top: 1px solid var(--garis); margin: 22px 0; }
 
@@ -510,9 +633,7 @@ hr { border: 0; border-top: 1px solid var(--garis); margin: 32px 0; }
   h2 { font-size: 22px; }
   .grid-level { grid-template-columns: 1fr; gap: 16px; }
   .hasil { padding: 20px; }
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pembahasan { flex-direction: column; align-items: stretch; }
-  .kotak-grid { grid-template-columns: repeat(10, 18px); }
+  .hasil-kaki { flex-direction: column; align-items: stretch; }
   .btn-auto { width: 100%; }
 }
 
