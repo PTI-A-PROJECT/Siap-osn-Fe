@@ -22,7 +22,7 @@ const ReviewSimulasiView = () => import('@/views/siswa/ReviewSimulasiView.vue')
 const RiwayatView = () => import('@/views/siswa/RiwayatView.vue')
 const MateriView = () => import('@/views/siswa/MateriView.vue')
 const LatihanView = () => import('@/views/siswa/LatihanView.vue')
-const PlaceholderView = () => import('@/views/siswa/PlaceholderView.vue')
+const ProgressView = () => import('@/views/siswa/ProgressView.vue')
 const AdminDashboardView = () => import('@/views/admin/DashboardView.vue')
 const ForbiddenView = () => import('@/views/ForbiddenView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
@@ -115,7 +115,7 @@ export const routes = [
       {
         path: 'siswa/progress',
         name: 'siswa.progress',
-        component: PlaceholderView,
+        component: ProgressView,
         meta: { requiresAuth: true, role: 'siswa', title: 'Progress Belajar' },
       },
       {
