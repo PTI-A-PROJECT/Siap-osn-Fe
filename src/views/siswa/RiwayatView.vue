@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import UserMenu from '@/components/UserMenu.vue'
 import { JENIS_SEMUA, useRiwayatStore } from '@/stores/riwayat.js'
 import { usePretestStore } from '@/stores/pretest.js'
@@ -8,6 +8,7 @@ import { pesanError } from '@/lib/errors.js'
 import { useToast } from 'primevue/usetoast'
 
 const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 const riwayat = useRiwayatStore()
 const pretest = usePretestStore()
@@ -37,6 +38,16 @@ function formatTanggal(iso) {
 
 function formatNilai(nilai) {
   return nilai == null ? '—' : String(Math.round(nilai))
+}
+
+// Baris hasil bisa dibuka lagi: pre-test ke pemetaan, simulasi ke halaman
+// hasil. Latihan tidak punya halaman hasil tersendiri, jadi tetap teks biasa.
+function ruteBaris(r) {
+  if (!r.referensiId) return null
+  if (r.jenis === 'simulasi') {
+    return { name: 'siswa.simulasi.hasil', params: { hasilId: r.referensiId } }
+  }
+  return null
 }
 </script>
 
@@ -100,10 +111,16 @@ function formatNilai(nilai) {
             class="flex items-center gap-3 text-sm"
           >
             <span class="h-8 w-8 shrink-0 rounded-lg bg-[#dfe7f5]"></span>
-            <span class="flex-1">
+            <component
+              :is="ruteBaris(r) ? 'button' : 'span'"
+              :type="ruteBaris(r) ? 'button' : undefined"
+              class="flex-1 text-left"
+              :class="ruteBaris(r) ? 'hover:underline' : ''"
+              @click="ruteBaris(r) && router.push(ruteBaris(r))"
+            >
               {{ r.judul }}
               <span class="block text-xs text-[#6b778c]">{{ formatTanggal(r.tanggal) }}</span>
-            </span>
+            </component>
             <span class="text-sm font-bold">{{ formatNilai(r.nilai) }}</span>
           </li>
         </ul>

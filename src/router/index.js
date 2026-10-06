@@ -16,6 +16,9 @@ const SiswaProfileView = () => import('@/views/siswa/ProfileView.vue')
 const SiswaPretestView = () => import('@/views/siswa/PretestView.vue')
 const PemetaanKompetensiView = () => import('@/views/siswa/PemetaanKompetensiView.vue')
 const SimulasiView = () => import('@/views/siswa/SimulasiView.vue')
+const UjianSimulasiView = () => import('@/views/siswa/UjianSimulasiView.vue')
+const HasilSimulasiView = () => import('@/views/siswa/HasilSimulasiView.vue')
+const ReviewSimulasiView = () => import('@/views/siswa/ReviewSimulasiView.vue')
 const RiwayatView = () => import('@/views/siswa/RiwayatView.vue')
 const MateriView = () => import('@/views/siswa/MateriView.vue')
 const LatihanView = () => import('@/views/siswa/LatihanView.vue')
@@ -118,6 +121,24 @@ export const routes = [
         name: 'siswa.simulasi',
         component: SimulasiView,
         meta: { requiresAuth: true, role: 'siswa', title: 'Simulasi Seleksi' },
+      },
+      {
+        path: 'siswa/simulasi/ujian/:simulasiId',
+        name: 'siswa.ujian',
+        component: UjianSimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Simulasi' },
+      },
+      {
+        path: 'siswa/simulasi/hasil/:hasilId',
+        name: 'siswa.simulasi.hasil',
+        component: HasilSimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Hasil Simulasi' },
+      },
+      {
+        path: 'siswa/simulasi/hasil/:hasilId/pembahasan',
+        name: 'siswa.simulasi.review',
+        component: ReviewSimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Pembahasan' },
       },
       {
         path: 'siswa/riwayat',

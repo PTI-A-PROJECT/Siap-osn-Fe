@@ -6,18 +6,20 @@ import { useMateriStore } from '@/stores/materi.js'
 import { usePretestStore } from '@/stores/pretest.js'
 import { useProgressStore } from '@/stores/progress.js'
 import { useRiwayatStore } from '@/stores/riwayat.js'
+import { useSimulasiStore } from '@/stores/simulasi.js'
 
 // Store tidak tahu HTTP/backend: token persisten + request lewat
 // authService, bentuk user dari services/mappers/user.js.
-// Satu tempat: semua data milik akun dibuang saat sesi berganti.
-// Tidak cukup hanya progress — pretest/latihan/materi/riwayat menyimpan
-// soal, jawaban, dan pretest_id di localStorage.
+
+// Tidak cukup hanya progress — pretest/latihan/materi/riwayat/simulasi
+// menyimpan soal, jawaban, dan id percobaan milik akun sebelumnya.
 function resetDataAkun() {
   useProgressStore().$reset()
   usePretestStore().$reset()
   useLatihanStore().$reset()
   useMateriStore().$reset()
   useRiwayatStore().$reset()
+  useSimulasiStore().$reset()
 }
 
 export const useAuthStore = defineStore('auth', () => {

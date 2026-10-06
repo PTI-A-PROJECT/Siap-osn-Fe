@@ -24,6 +24,13 @@ export const ENDPOINTS = {
     pengerjaan: (id) => `/quiz-pengerjaan/${id}`,
     pengerjaanJawaban: (id) => `/quiz-pengerjaan/${id}/jawaban`,
     pengerjaanSubmit: (id) => `/quiz-pengerjaan/${id}/submit`,
+    simulasiSyarat: '/simulasi/syarat',
+    simulasi: '/simulasi',
+    simulasiMulai: (id) => `/simulasi/${id}/mulai`,
+    hasilSimulasi: (id) => `/hasil-simulasi/${id}`,
+    hasilSimulasiJawaban: (id) => `/hasil-simulasi/${id}/jawaban`,
+    hasilSimulasiSubmit: (id) => `/hasil-simulasi/${id}/submit`,
+    hasilSimulasiReview: (id) => `/hasil-simulasi/${id}/review`,
   },
   admin: {
     dashboard: '/admin/dashboard',
