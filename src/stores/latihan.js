@@ -1,16 +1,19 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { latihanService } from '@/services/latihan.js'
+import { kodeError } from '@/lib/errors.js'
 
 // State pengerjaan latihan/quiz. Pola sama dengan pre-test, tanpa pemilih
 // tingkat dan tanpa timer (quiz terikat satu materi, backend tanpa durasi).
-// ID pengerjaan disimpan agar reload bisa resume via GET.
-const KUNCI_LATIHAN_AKTIF = 'siap_osn_latihan_aktif'
+// Tidak ada ID di localStorage: POST /quiz/{id}/mulai sudah idempoten dan
+// mengembalikan pengerjaan berjalan, jadi `mulai` saja yang dipakai resume.
+const KUNCI_LATIHAN_LAMA = 'siap_osn_latihan_aktif'
 
 export const STATUS_LATIHAN = {
   IDLE: 'idle',
   MENGERJAKAN: 'mengerjakan',
   MENGUMPULKAN: 'mengumpulkan',
+  MENILAI: 'menilai',
   SELESAI: 'selesai',
 }
 
@@ -32,17 +35,19 @@ export const useLatihanStore = defineStore('latihan', () => {
     () => soal.value.filter((s) => s.jawaban !== null && s.jawaban !== undefined && s.jawaban !== '').length,
   )
 
-  function bacaSimpanan() {
-    try {
-      return JSON.parse(localStorage.getItem(KUNCI_LATIHAN_AKTIF) ?? 'null')
-    } catch {
-      return null
+  function terapkanPaket(paket) {
+    if (paket.jenis === 'pengerjaan') return terapkanPengerjaan(paket)
+    if (paket.jenis === 'menunggu') {
+      pengerjaanId.value = paket.id
+      quizId.value = paket.quizId
+      materiId.value = paket.materiId
+      materiJudul.value = paket.materiJudul
+      status.value = STATUS_LATIHAN.MENILAI
+      return
     }
-  }
-
-  function tulisSimpanan(v) {
-    if (v) localStorage.setItem(KUNCI_LATIHAN_AKTIF, JSON.stringify(v))
-    else localStorage.removeItem(KUNCI_LATIHAN_AKTIF)
+    hasil.value = paket.hasil
+    pengerjaanId.value = paket.hasil.id
+    status.value = STATUS_LATIHAN.SELESAI
   }
 
   function terapkanPengerjaan(paket) {
@@ -53,7 +58,6 @@ export const useLatihanStore = defineStore('latihan', () => {
     soal.value = paket.soal.map((s) => ({ ...s }))
     hasil.value = null
     status.value = STATUS_LATIHAN.MENGERJAKAN
-    tulisSimpanan({ id: paket.id })
   }
 
   function sinyalBaru() {
@@ -82,13 +86,7 @@ export const useLatihanStore = defineStore('latihan', () => {
     loading.value = true
     error.value = false
     try {
-      const paket = await latihanService.lihat({ id, signal })
-      if (paket.jenis === 'pengerjaan') terapkanPengerjaan(paket)
-      else {
-        hasil.value = paket.hasil
-        pengerjaanId.value = paket.hasil.id
-        status.value = STATUS_LATIHAN.SELESAI
-      }
+      terapkanPaket(await latihanService.lihat({ id, signal }))
     } catch (err) {
       if (!signal.aborted) error.value = true
       throw err
@@ -108,6 +106,8 @@ export const useLatihanStore = defineStore('latihan', () => {
     }
   }
 
+// POST submit (idempoten). 503 HASIL_SEDANG_DIPROSES bukan kegagalan:
+  // jawaban sudah terkunci di server, tinggal menunggu nilai.
   async function kumpulkan() {
     const signal = sinyalBaru()
     status.value = STATUS_LATIHAN.MENGUMPULKAN
@@ -115,14 +115,29 @@ export const useLatihanStore = defineStore('latihan', () => {
     try {
       hasil.value = await latihanService.kumpulkan({ id: pengerjaanId.value, signal })
       status.value = STATUS_LATIHAN.SELESAI
-      tulisSimpanan(null)
       return hasil.value
-    } catch {
+    } catch (err) {
+      if (kodeError(err) === 'HASIL_SEDANG_DIPROSES') {
+        status.value = STATUS_LATIHAN.MENILAI
+        return null
+      }
       if (!signal.aborted) {
         error.value = true
         status.value = STATUS_LATIHAN.MENGERJAKAN
       }
       throw err
+    }
+  }
+
+  // Dipanggil berkala oleh view saat status MENILAI.
+  async function cekHasil() {
+    if (status.value !== STATUS_LATIHAN.MENILAI || !pengerjaanId.value) return null
+    try {
+      hasil.value = await latihanService.kumpulkan({ id: pengerjaanId.value })
+      status.value = STATUS_LATIHAN.SELESAI
+      return hasil.value
+    } catch {
+      return null // masih diproses; view mencoba lagi
     }
   }
 
@@ -139,7 +154,8 @@ export const useLatihanStore = defineStore('latihan', () => {
     loading.value = false
     error.value = false
     simpanError.value = false
-    tulisSimpanan(null)
+    // Kunci lama tidak dipakai lagi; dibersihkan sekali jalan.
+    localStorage.removeItem(KUNCI_LATIHAN_LAMA)
   }
 
   return {
@@ -154,11 +170,11 @@ export const useLatihanStore = defineStore('latihan', () => {
     error,
     simpanError,
     jumlahTerjawab,
-    idTersimpan: bacaSimpanan,
     mulai,
     lanjutkan,
     simpanJawaban,
     kumpulkan,
+    cekHasil,
     $reset,
   }
 })

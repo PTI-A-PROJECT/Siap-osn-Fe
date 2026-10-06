@@ -4,12 +4,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import UserMenu from '@/components/UserMenu.vue'
 import { useLatihanStore, STATUS_LATIHAN } from '@/stores/latihan.js'
+import { useMateriStore } from '@/stores/materi.js'
 import { pesanError } from '@/lib/errors.js'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const latihan = useLatihanStore()
+const materi = useMateriStore()
 
 const memuatAwal = ref(true)
 const galatAwal = ref('')
@@ -40,6 +42,19 @@ function sudahDijawab(i) {
 }
 const jmlTerjawab = computed(() => soal.value.filter((_, i) => sudahDijawab(i)).length)
 
+/* ---------- Polling nilai (status assessing) ---------- */
+let timerPolling = null
+function stopPolling() {
+  clearInterval(timerPolling)
+  timerPolling = null
+}
+// Nilai terbaik di halaman materi harus ikut baru.
+async function hasilMuncul() {
+  stopPolling()
+  if (!materi.tingkatId) return
+  await materi.fetchDaftar({ tingkatId: materi.tingkatId, force: true }).catch(() => {})
+}
+
 onMounted(async () => {
   const quizId = Number(route.params.quizId)
   if (!Number.isFinite(quizId) || quizId <= 0) {
@@ -47,21 +62,27 @@ onMounted(async () => {
     memuatAwal.value = false
     return
   }
-  if (latihan.status === STATUS_LATIHAN.MENGERJAKAN && latihan.soal.length) {
-    seedJawaban()
-    memuatAwal.value = false
-    return
-  }
-  const tersimpan = latihan.idTersimpan()
-  try {
-    if (tersimpan?.id) await latihan.lanjutkan({ id: tersimpan.id })
-    else await latihan.mulai({ quizId })
-  } catch {
-    galatAwal.value = 'Tidak dapat membuka latihan. Periksa koneksi lalu coba lagi.'
-    memuatAwal.value = false
-    return
+  // Store hangat hanya dipakai bila memang quiz yang sama.
+  const hangat =
+    latihan.quizId === quizId &&
+    latihan.status === STATUS_LATIHAN.MENGERJAKAN &&
+    latihan.soal.length
+  if (!hangat) {
+    try {
+      await latihan.mulai({ quizId })
+    } catch (err) {
+      galatAwal.value = pesanError(err, 'Tidak dapat membuka latihan. Coba lagi.')
+      memuatAwal.value = false
+      return
+    }
   }
   if (latihan.status === STATUS_LATIHAN.SELESAI) {
+    await hasilMuncul()
+    memuatAwal.value = false
+    return
+  }
+  if (latihan.status === STATUS_LATIHAN.MENILAI) {
+    mulaiPolling()
     memuatAwal.value = false
     return
   }
@@ -106,8 +127,14 @@ async function kumpulkan() {
   if (mengirim.value || !bolehMengerjakan.value) return
   mengirim.value = true
   try {
-    await latihan.kumpulkan()
+    const hasil = await latihan.kumpulkan()
     modalSelesai.value = false
+    if (!hasil) {
+      // 503 HASIL_SEDANG_DIPROSES: jawaban terkunci, tunggu nilai.
+      mulaiPolling()
+      return
+    }
+    await hasilMuncul()
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Gagal mengumpulkan', detail: pesanError(err), life: 4000 })
     modalSelesai.value = false
@@ -116,11 +143,21 @@ async function kumpulkan() {
   }
 }
 
+function mulaiPolling() {
+  stopPolling()
+  timerPolling = setInterval(async () => {
+    const hasil = await latihan.cekHasil()
+    if (!hasil) return
+    await hasilMuncul()
+  }, 5000)
+}
+
 function kembaliKeMateri() {
   router.push({ name: 'siswa.materi' })
 }
 
 onBeforeUnmount(() => {
+  stopPolling()
   for (const k of Object.keys(timerSimpan)) clearTimeout(timerSimpan[k])
 })
 
@@ -175,6 +212,15 @@ function formatNilai(nilai) {
             Kembali ke Materi
           </button>
         </div>
+      </section>
+
+      <!-- SEDANG DINILAI -->
+      <section
+        v-else-if="latihan.status === STATUS_LATIHAN.MENILAI"
+        class="rounded-2xl border border-[#f3d9a8] bg-[#fffaef] px-5 py-3 text-[13px] text-[#8a5a12]"
+      >
+        Jawabanmu sudah dikumpulkan dan sedang dinilai. Halaman ini akan menampilkan nilai
+        otomatis begitu selesai.
       </section>
 
       <!-- PENGERJAAN -->
