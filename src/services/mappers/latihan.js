@@ -46,7 +46,8 @@ export function mapHasilLatihan(r) {
 export function paketLatihan(r) {
   if (Array.isArray(r?.soal)) {
     return {
-      jenis: 'pengerjaan',
+      // Sudah disubmit tapi belum dinilai -> jawaban terkunci, tunggu hasil.
+      jenis: r.disubmit_pada ? 'menunggu' : 'pengerjaan',
       id: r.id,
       quizId: r.quiz_id ?? null,
       materiId: r.materi_id ?? null,

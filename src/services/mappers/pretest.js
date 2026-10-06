@@ -90,7 +90,8 @@ export function mapHasilPretest(r) {
 export function paketPretest(r) {
   if (Array.isArray(r?.soal)) {
     return {
-      jenis: 'pengerjaan',
+      // Sudah disubmit tapi belum dinilai -> jawaban terkunci, tunggu hasil.
+      jenis: r.disubmit_pada ? 'menunggu' : 'pengerjaan',
       id: r.id,
       tingkatId: r.tingkat_id ?? null,
       soal: [...r.soal].sort((a, b) => angka(a.urutan) - angka(b.urutan)).map(mapSoal),

@@ -15,7 +15,8 @@ export const pretestService = {
   // POST /pretest {tingkat_id} -> 201 (baru) atau 200 (resume yang berjalan).
   async mulai({ tingkatId, signal } = {}) {
     const paket = paketPretest(unwrap(await api.post(ENDPOINTS.siswa.pretestMulai, { tingkat_id: tingkatId }, { signal })))
-    if (paket.jenis !== 'pengerjaan') throw new Error('Respons mulai pre-test tidak berisi soal')
+    // 'menunggu' tidak mungkin dari mulai (belum ada submit), tapi jangan dilempar.
+if (paket.jenis === 'hasil') throw new Error('Respons mulai pre-test tidak berisi soal')
     return paket
   },
 
