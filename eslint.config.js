@@ -22,6 +22,16 @@ export default defineConfig([
     },
   },
 
+  // Konfigurasi build & skrip Playwright jalan di Node, bukan di browser.
+  {
+    files: ['vite.config.js', 'playwright.config.js', 'e2e/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
 

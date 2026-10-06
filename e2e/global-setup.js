@@ -28,7 +28,7 @@ const CEK = [
 export default function globalSetup() {
   const mati = []
   for (const { nama, cmd, ok } of CEK) {
-    let hasil = ''
+    let hasil
     try {
       hasil = execSync(cmd, { encoding: 'utf8', timeout: 15_000 }).trim()
     } catch {

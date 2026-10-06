@@ -76,7 +76,7 @@ test.describe('auth', () => {
     await page.waitForURL(/\/login/)
   })
 
-  test('ganti akun tidak meninggalkan sisa data pre-test', async ({ page, request }) => {
+  test('ganti akun tidak meninggalkan sisa data pre-test', async ({ page }) => {
     const pertama = await buatSiswaBaru(page.request, 'auth.sisa')
     await loginSiswa(page, pertama)
     await page.goto('/siswa/pretest')
