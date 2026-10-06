@@ -168,9 +168,6 @@ function statusLabel(m) {
             >
               Mulai Latihan →
             </button>
-            <p v-else-if="detail.latihanTersedia" class="w-full text-xs text-[#6b778c]">
-              Latihan tersedia — menunggu ID quiz dari backend.
-            </p>
           </div>
         </template>
       </section>
