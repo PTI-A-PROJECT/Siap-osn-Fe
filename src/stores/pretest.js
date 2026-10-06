@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { pretestService } from '@/services/pretest.js'
+import { kodeError, statusError } from '@/lib/errors.js'
 
 // State pengerjaan pre-test lintas halaman (soal + jawaban + hasil).
 // Kontrak API + bentuk data: services/mappers/pretest.js.
@@ -18,6 +19,7 @@ export const STATUS = {
   MEMILIH: 'memilih',
   MENGERJAKAN: 'mengerjakan',
   MENGUMPULKAN: 'mengumpulkan',
+  MENILAI: 'menilai',
   SELESAI: 'selesai',
 }
 
@@ -35,6 +37,9 @@ export const usePretestStore = defineStore('pretest', () => {
   let inflightTingkat = null
   let tingkatDimuatPada = 0
   let controller = null
+  // Controller terpisah: muatTingkat boleh berjalan berdampingan dengan
+  // lanjutkan/kumpulkan tanpa saling membatalkan.
+  let controllerTingkat = null
 
   const jumlahTerjawab = computed(
     () => soal.value.filter((s) => s.jawaban !== null && s.jawaban !== undefined && s.jawaban !== '').length,
@@ -73,8 +78,10 @@ export const usePretestStore = defineStore('pretest', () => {
     if (!force && tingkatList.value.length && Date.now() - tingkatDimuatPada < SEGAR_TINGKAT_MS) {
       return Promise.resolve()
     }
-    const signal = sinyalBaru()
-    loading.value = true
+    controllerTingkat?.abort()
+    controllerTingkat = new AbortController()
+    const { signal } = controllerTingkat
+    // `loading` tidak disentuh di sini: itu milik mulai/lanjutkan.
     inflightTingkat = pretestService
       .tingkat({ signal })
       .then((list) => {
@@ -86,7 +93,6 @@ export const usePretestStore = defineStore('pretest', () => {
         if (!signal.aborted) error.value = true
       })
       .finally(() => {
-        if (!signal.aborted) loading.value = false
         inflightTingkat = null
       })
     return inflightTingkat
@@ -107,20 +113,32 @@ export const usePretestStore = defineStore('pretest', () => {
     }
   }
 
-  // GET lihat: resume pengerjaan, atau langsung hasil bila sudah selesai.
+  function terapkanPaket(paket) {
+    if (paket.jenis === 'pengerjaan') return terapkanPengerjaan(paket)
+    if (paket.jenis === 'menunggu') {
+      pretestId.value = paket.id
+      tingkatId.value = paket.tingkatId
+      status.value = STATUS.MENILAI
+      tulisSimpanan({ id: paket.id, tingkatId: paket.tingkatId })
+      return
+    }
+    hasil.value = paket.hasil
+    pretestId.value = paket.hasil.id
+    tingkatId.value = paket.hasil.tingkatId
+    status.value = STATUS.SELESAI
+    tulisSimpanan(null)
+  }
+
+  // GET lihat: resume pengerjaan, menunggu nilai, atau langsung hasil.
   async function lanjutkan({ id } = {}) {
     const signal = sinyalBaru()
     loading.value = true
     error.value = false
     try {
-      const paket = await pretestService.lihat({ id, signal })
-      if (paket.jenis === 'pengerjaan') terapkanPengerjaan(paket)
-      else {
-        hasil.value = paket.hasil
-        pretestId.value = paket.hasil.id
-        status.value = STATUS.SELESAI
-      }
+      terapkanPaket(await pretestService.lihat({ id, signal }))
     } catch (err) {
+      // ID milik akun lain / sudah terhapus: buang supaya tidak macet.
+      if (statusError(err) === 404) tulisSimpanan(null)
       if (!signal.aborted) error.value = true
       throw err
     } finally {
@@ -141,7 +159,8 @@ export const usePretestStore = defineStore('pretest', () => {
     }
   }
 
-  // POST submit (idempoten) -> hasil. ID tersimpan dihapus setelah sukses.
+  // POST submit (idempoten). 503 HASIL_SEDANG_DIPROSES bukan kegagalan:
+  // jawaban sudah terkunci di server, tinggal menunggu nilai.
   async function kumpulkan() {
     const signal = sinyalBaru()
     status.value = STATUS.MENGUMPULKAN
@@ -152,6 +171,10 @@ export const usePretestStore = defineStore('pretest', () => {
       tulisSimpanan(null)
       return hasil.value
     } catch (err) {
+      if (kodeError(err) === 'HASIL_SEDANG_DIPROSES') {
+        status.value = STATUS.MENILAI
+        return null
+      }
       if (!signal.aborted) {
         error.value = true
         status.value = STATUS.MENGERJAKAN
@@ -160,10 +183,26 @@ export const usePretestStore = defineStore('pretest', () => {
     }
   }
 
+  // Dipanggil berkala oleh view saat status MENILAI. Submit ulang aman
+  // (idempoten) dan sekaligus memicu penilaian ulang di server.
+  async function cekHasil() {
+    if (status.value !== STATUS.MENILAI || !pretestId.value) return null
+    try {
+      hasil.value = await pretestService.kumpulkan({ id: pretestId.value })
+      status.value = STATUS.SELESAI
+      tulisSimpanan(null)
+      return hasil.value
+    } catch {
+      return null // masih diproses; view mencoba lagi
+    }
+  }
+
   // Wajib dipanggil saat login/logout supaya pretest akun lama tidak bocor.
   function $reset() {
     controller?.abort()
     controller = null
+    controllerTingkat?.abort()
+    controllerTingkat = null
     inflightTingkat = null
     tingkatDimuatPada = 0
     status.value = STATUS.IDLE
@@ -195,6 +234,7 @@ export const usePretestStore = defineStore('pretest', () => {
     lanjutkan,
     simpanJawaban,
     kumpulkan,
+    cekHasil,
     $reset,
   }
 })
