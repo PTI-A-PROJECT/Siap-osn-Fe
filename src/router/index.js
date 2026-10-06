@@ -93,7 +93,9 @@ export const routes = [
         meta: { requiresAuth: true, role: 'siswa' },
       },
       {
-        path: 'siswa/pemetaan',
+        // id opsional: halaman masih bisa dibuka dari riwayat atau dashboard
+        // tanpa ID, dan view akan Resolve sendiri ke pre-test terakhir.
+        path: 'siswa/pemetaan/:id?',
         name: 'siswa.pemetaan',
         component: PemetaanKompetensiView,
         meta: { requiresAuth: true, role: 'siswa', title: 'Pemetaan Kompetensi' },
