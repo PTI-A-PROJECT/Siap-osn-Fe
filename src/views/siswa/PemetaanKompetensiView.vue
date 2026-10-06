@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserMenu from '@/components/UserMenu.vue'
 import { riwayatService } from '@/services/riwayat.js'
@@ -18,8 +18,9 @@ const materi = useMateriStore()
 
 const memuat = ref(true)
 
-onMounted(async () => {
+async function muatHasil() {
   const idDariUrl = Number(route.params.id)
+  memuat.value = true
 
   // Store masih hangat (pindah halaman tanpa reload).
   if (!idDariUrl && pretest.hasil) {
@@ -49,7 +50,20 @@ onMounted(async () => {
     // Gagal (404/403): tampilkan kondisi kosong di bawah.
   }
   memuat.value = false
-})
+}
+
+// Dipicu oleh perubahan route.params.id, bukan hanya onMounted.
+//
+// Vue Router memakai ulang instance komponen yang sama bila yang berubah hanya
+// param -- jadi onMounted TIDAK dipanggil ulang untuk /siswa/pemetaan ->
+// /siswa/pemetaan/{id}. Akibatnya langkah router.replace() di dalam muatHasil()
+// membuat halaman tersangkut di "Memuat hasil pre-test..." tanpa pernah memanggil
+// GET /pretest/{id}. Itu regresi Fase 5.1.
+//
+// Sengaja watch (bukan watchEffect) dengan getter(route.params.id) saja:
+// muatHasil() menulis ke store pretest, dan kalau dependensinya store ikut
+// dipantau, penulisan itu akan memicu dirinya sendiri tanpa henti.
+watch(() => route.params.id, muatHasil, { immediate: true })
 
 const hasil = computed(() => pretest.hasil)
 
