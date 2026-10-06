@@ -64,12 +64,18 @@ describe('progress store', () => {
     expect(progress.data.preTestSelesai).toBe(true)
   })
 
-  it('fetchDashboard tidak mengunci ulang dashboard setelah pre-test lokal dikumpulkan', async () => {
-    siswaService.dashboard.mockResolvedValue(hasil)
+  it('flag optimistis dari markPreTestCompleted ditimpa data server berikutnya', async () => {
+    // markPreTestCompleted() memberi update optimistis sampai fetch berikutnya;
+    // setelah itu server yang berkuasa (turnover baru bisa mengunci lagi).
+    siswaService.dashboard.mockResolvedValue({ ...hasil, preTestSelesai: true })
     const progress = useProgressStore()
     progress.markPreTestCompleted()
     await progress.fetchDashboard()
     expect(progress.data.preTestSelesai).toBe(true)
+
+    siswaService.dashboard.mockResolvedValue({ ...hasil, preTestSelesai: false })
+    await progress.fetchDashboard({ force: true })
+    expect(progress.data.preTestSelesai).toBe(false)
   })
 
   it('fetchDashboard mengisi statistik materi dari tingkat terbuka', async () => {

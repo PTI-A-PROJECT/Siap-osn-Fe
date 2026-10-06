@@ -55,6 +55,18 @@ describe('latihanService', () => {
     expect(paket.hasil.jawaban[0]).toMatchObject({ soalId: 201, benar: true })
   })
 
+  it('lihat mengenali paket menunggu saat disubmit tapi belum dinilai', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        message: 'OK',
+        data: { id: 31, quiz_id: 7, disubmit_pada: '2026-10-06T10:00:00Z', soal: [] },
+      },
+    })
+    const paket = await latihanService.lihat({ id: 31 })
+    expect(paket.jenis).toBe('menunggu')
+    expect(paket.quizId).toBe(7)
+  })
+
   it('simpanJawaban dan kumpulkan memakai path pengerjaan', async () => {
     api.put.mockResolvedValue({ data: { message: 'Jawaban tersimpan' } })
     await latihanService.simpanJawaban({ id: 31, soalId: 201, jawaban: 'B' })

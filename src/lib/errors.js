@@ -25,6 +25,19 @@ const TERJEMAHAN_KODE = {
   SYARAT_SIMULASI_BELUM_TERPENUHI: 'Syarat mengikuti simulasi belum terpenuhi',
   KUOTA_SIMULASI_HABIS: 'Kuota simulasi sudah habis',
   WAKTU_HABIS: 'Waktu pengerjaan sudah habis',
+  BELUM_PRETEST: 'Selesaikan pre-test dulu untuk membuka fitur ini',
+  SIMULASI_BELUM_DINILAI: 'Simulasi sebelumnya masih dinilai, coba lagi sebentar',
+  LAYANAN_HITUNG_SALAH_KONFIGURASI: 'Penilaian sedang bermasalah, hubungi admin',
+}
+
+// Kode bisnis backend ({ kode }) atau null.
+export function kodeError(err) {
+  return err?.response?.data?.kode ?? null
+}
+
+// Status HTTP atau null (error jaringan/abort).
+export function statusError(err) {
+  return err?.response?.status ?? null
 }
 
 export function pesanError(err, fallback = 'Terjadi kesalahan, coba lagi') {

@@ -43,21 +43,16 @@ export const useProgressStore = defineStore('progress', () => {
         if (signal.aborted) return
         data.value = {
           ...hasil,
-          preTestSelesai: hasil.preTestSelesai || data.value.preTestSelesai,
+          // Server yang jadi acuan. `||` lama membuat flag menempel selama
+          // sesi walau server sudah bilang belum; markPreTestCompleted()
+          // tetap memberi update optimistis sampai fetch berikutnya.
+          preTestSelesai: hasil.preTestSelesai,
         }
         loaded.value = true
         dimuatPada = Date.now()
-        // Cuplikan riwayat terbaru: opsional — gagal dimuat tidak menandai
-        // error dashboard (bagian ini punya kondisi kosong sendiri).
-        useRiwayatStore()
-          .terbaris()
-          .then((items) => {
-            if (signal.aborted) return
-            data.value = { ...data.value, riwayat: items }
-          })
-          .catch(() => {})
         // Statistik materi (P3): agregat daftar materi semua tingkat terbuka.
-        // Gagal dimuat -> angka tetap nol (kartu statistik punya kondisi kosong).
+        // Cuplikan riwayat ikut diambil di sini, setelah daftar tingkat ada,
+        // supaya judulnya memuat nama tingkat.
         muatStatistikMateri(signal)
       })
       .catch(() => {
@@ -99,13 +94,20 @@ export const useProgressStore = defineStore('progress', () => {
             badge: 'Wajib',
           })),
       }
+      // Cuplikan riwayat terbaru: opsional — gagal dimuat tidak menandai
+      // error dashboard (bagian ini punya kondisi kosong sendiri).
+      if (signal.aborted) return
+      const items = await useRiwayatStore().terbaris().catch(() => [])
+      if (signal.aborted) return
+      data.value = { ...data.value, riwayat: items }
     } catch {
       // Biarkan nol/kosong — UI menampilkan kondisi kosong.
     }
   }
 
   // Wajib dipanggil saat login/logout supaya data siswa sebelumnya tidak terlihat akun berikutnya.
-  function $reset() {    controller?.abort()
+  function $reset() {
+    controller?.abort()
     controller = null
     inflight = null
     dimuatPada = 0

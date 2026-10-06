@@ -9,7 +9,8 @@ export const latihanService = {
   // POST /quiz/{quiz}/mulai -> 201 (baru) atau 200 (lanjutkan).
   async mulai({ quizId, signal } = {}) {
     const paket = paketLatihan(unwrap(await api.post(ENDPOINTS.siswa.quizMulai(quizId), {}, { signal })))
-    if (paket.jenis !== 'pengerjaan') throw new Error('Respons mulai latihan tidak berisi soal')
+    // 'menunggu' tidak mungkin dari mulai (belum ada submit), tapi jangan dilempar.
+if (paket.jenis === 'hasil') throw new Error('Respons mulai latihan tidak berisi soal')
     return paket
   },
 

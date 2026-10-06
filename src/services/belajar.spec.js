@@ -22,6 +22,7 @@ const BARIS = {
   prioritas: 1,
   progress: { status: 'belajar', persentase: 0, tanggal_selesai: null },
   nilai_latihan_terbaik: 80,
+  quiz_id: 9,
   latihan_belum_tersedia: false,
 }
 
@@ -38,7 +39,15 @@ describe('belajarService', () => {
       progress: { status: 'belajar', persentase: 0, tanggalSelesai: null },
       nilaiTerbaik: 80,
       latihanTersedia: true,
+      quizId: 9,
     })
+  })
+
+  it('quiz_id null saat latihan belum tersedia', async () => {
+    api.get.mockResolvedValue({ data: { data: [{ ...BARIS, quiz_id: null, latihan_belum_tersedia: true }] } })
+    const hasil = await belajarService.daftar({ tingkatId: 1 })
+    expect(hasil[0].quizId).toBeNull()
+    expect(hasil[0].latihanTersedia).toBe(false)
   })
 
   it('detail menambah isi/file/gambar', async () => {

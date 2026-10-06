@@ -36,8 +36,6 @@ export function mapMateri(r) {
     progress: mapProgress(r.progress),
     nilaiTerbaik: r.nilai_latihan_terbaik == null ? null : Number(r.nilai_latihan_terbaik),
     latihanTersedia: !r.latihan_belum_tersedia,
-    // TODO: backend belum mengirim quiz_id (hanya flag tersedia).
-    // Setelah ada, isi dari respons dan jadikan syarat tombol latihan.
     quizId: r.quiz_id ?? null,
   }
 }

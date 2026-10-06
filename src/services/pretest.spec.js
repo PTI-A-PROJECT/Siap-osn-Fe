@@ -83,6 +83,19 @@ describe('pretestService', () => {
     expect(paket.hasil.materiWajib).toEqual([{ materiId: 7, prioritas: 1 }])
   })
 
+  it('lihat mengenali paket menunggu saat disubmit tapi belum dinilai', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        message: 'OK',
+        data: { id: 12, tingkat_id: 1, disubmit_pada: '2026-10-06T10:00:00Z', soal: [] },
+      },
+    })
+    const paket = await pretestService.lihat({ id: 12 })
+    expect(paket.jenis).toBe('menunggu')
+    expect(paket.id).toBe(12)
+    expect(paket.tingkatId).toBe(1)
+  })
+
   it('simpanJawaban mengirim soal_id + jawaban (null bila dikosongkan)', async () => {
     api.put.mockResolvedValue({ data: { message: 'Jawaban tersimpan' } })
     await pretestService.simpanJawaban({ id: 12, soalId: 101, jawaban: 'B' })

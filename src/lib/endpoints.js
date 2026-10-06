@@ -26,6 +26,6 @@ export const ENDPOINTS = {
     pengerjaanSubmit: (id) => `/quiz-pengerjaan/${id}/submit`,
   },
   admin: {
-    ping: '/admin/ping',
+    dashboard: '/admin/dashboard',
   },
 }
