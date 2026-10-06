@@ -69,9 +69,9 @@ export const useLatihanStore = defineStore('latihan', () => {
     error.value = false
     try {
       terapkanPengerjaan(await latihanService.mulai({ quizId: qid, signal }))
-    } catch {
+    } catch (err) {
       if (!signal.aborted) error.value = true
-      throw new Error('gagal-mulai')
+      throw err
     } finally {
       if (!signal.aborted) loading.value = false
     }
@@ -89,9 +89,9 @@ export const useLatihanStore = defineStore('latihan', () => {
         pengerjaanId.value = paket.hasil.id
         status.value = STATUS_LATIHAN.SELESAI
       }
-    } catch {
+    } catch (err) {
       if (!signal.aborted) error.value = true
-      throw new Error('gagal-muat')
+      throw err
     } finally {
       if (!signal.aborted) loading.value = false
     }
@@ -122,7 +122,7 @@ export const useLatihanStore = defineStore('latihan', () => {
         error.value = true
         status.value = STATUS_LATIHAN.MENGERJAKAN
       }
-      throw new Error('gagal-kumpulkan')
+      throw err
     }
   }
 

@@ -99,9 +99,9 @@ export const usePretestStore = defineStore('pretest', () => {
     error.value = false
     try {
       terapkanPengerjaan(await pretestService.mulai({ tingkatId: tid, signal }))
-    } catch {
+    } catch (err) {
       if (!signal.aborted) error.value = true
-      throw new Error('gagal-mulai')
+      throw err
     } finally {
       if (!signal.aborted) loading.value = false
     }
@@ -120,9 +120,9 @@ export const usePretestStore = defineStore('pretest', () => {
         pretestId.value = paket.hasil.id
         status.value = STATUS.SELESAI
       }
-    } catch {
+    } catch (err) {
       if (!signal.aborted) error.value = true
-      throw new Error('gagal-muat')
+      throw err
     } finally {
       if (!signal.aborted) loading.value = false
     }
@@ -151,12 +151,12 @@ export const usePretestStore = defineStore('pretest', () => {
       status.value = STATUS.SELESAI
       tulisSimpanan(null)
       return hasil.value
-    } catch {
+    } catch (err) {
       if (!signal.aborted) {
         error.value = true
         status.value = STATUS.MENGERJAKAN
       }
-      throw new Error('gagal-kumpulkan')
+      throw err
     }
   }
 

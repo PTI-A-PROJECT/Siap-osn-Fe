@@ -56,9 +56,9 @@ export const useMateriStore = defineStore('materi', () => {
     try {
       detail.value = await belajarService.detail({ id })
       return detail.value
-    } catch {
+    } catch (err) {
       error.value = true
-      throw new Error('gagal-muat')
+      throw err
     } finally {
       loading.value = false
     }
