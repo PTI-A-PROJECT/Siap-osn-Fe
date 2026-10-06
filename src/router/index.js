@@ -1,15 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import AppLayout from '@/layouts/AppLayout.vue'
-import LoginView from '@/views/LoginView.vue'
-import RegisterView from '@/views/RegisterView.vue'
-import SiswaDashboardView from '@/views/siswa/DashboardView.vue'
-import SiswaProfileView from '@/views/siswa/ProfileView.vue'
-import PlaceholderView from '@/views/siswa/PlaceholderView.vue'
-import AdminDashboardView from '@/views/admin/DashboardView.vue'
-import ForbiddenView from '@/views/ForbiddenView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
+import LandingPage from '@/views/LandingPage.vue'
+
+// Landing di-bundle langsung (halaman pertama mayoritas pengunjung).
+// Sisanya lazy: tiap halaman jadi chunk sendiri dan baru diunduh saat dibuka,
+// jadi bundle awal tidak ikut membawa dashboard admin/siswa.
+const AuthLayout = () => import('@/layouts/AuthLayout.vue')
+const AppLayout = () => import('@/layouts/AppLayout.vue')
+const LoginView = () => import('@/views/LoginView.vue')
+const RegisterView = () => import('@/views/RegisterView.vue')
+const LupaKataSandiView = () => import('@/views/LupaKataSandiView.vue')
+const ResetPasswordView = () => import('@/views/ResetPasswordView.vue')
+const SiswaDashboardView = () => import('@/views/siswa/DashboardView.vue')
+const SiswaProfileView = () => import('@/views/siswa/ProfileView.vue')
+const SiswaPretestView = () => import('@/views/siswa/PretestView.vue')
+const PemetaanKompetensiView = () => import('@/views/siswa/PemetaanKompetensiView.vue')
+const SimulasiView = () => import('@/views/siswa/SimulasiView.vue')
+const UjianSimulasiView = () => import('@/views/siswa/UjianSimulasiView.vue')
+const HasilSimulasiView = () => import('@/views/siswa/HasilSimulasiView.vue')
+const ReviewSimulasiView = () => import('@/views/siswa/ReviewSimulasiView.vue')
+const RiwayatView = () => import('@/views/siswa/RiwayatView.vue')
+const MateriView = () => import('@/views/siswa/MateriView.vue')
+const LatihanView = () => import('@/views/siswa/LatihanView.vue')
+const ProgressView = () => import('@/views/siswa/ProgressView.vue')
+const AdminDashboardView = () => import('@/views/admin/DashboardView.vue')
+const ForbiddenView = () => import('@/views/ForbiddenView.vue')
+const NotFoundView = () => import('@/views/NotFoundView.vue')
 
 // Satu-satunya tempat yang tahu pemetaan role -> dashboard.
 // Dipakai guard di bawah dan LoginView setelah login sukses.
@@ -20,60 +36,117 @@ export function dashboardFor(role) {
 // Diekspor agar guard.spec.js bisa membuat router sendiri
 // dengan createMemoryHistory dari definisi route yang sama.
 export const routes = [
+  // Landing page publik, tanpa layout
+  { path: '/', name: 'landing', component: LandingPage },
+
   {
     path: '/',
     component: AuthLayout,
     children: [
-      { path: 'login', name: 'login', component: LoginView, meta: { guestOnly: true } },
-      { path: 'register', name: 'register', component: RegisterView, meta: { guestOnly: true } },
+      {
+        path: 'login',
+        name: 'login',
+        component: LoginView,
+        meta: { guestOnly: true },
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: RegisterView,
+        meta: { guestOnly: true },
+      },
+      {
+        path: 'lupa-kata-sandi',
+        name: 'forgot-password',
+        component: LupaKataSandiView,
+        meta: { guestOnly: true },
+      },
+      {
+        path: 'reset-password',
+        name: 'reset-password',
+        component: ResetPasswordView,
+        meta: { guestOnly: true },
+      },
     ],
   },
   {
     path: '/',
     component: AppLayout,
     children: [
-      { path: '', name: 'home', component: SiswaDashboardView, meta: { requiresAuth: true } },
+      // route 'home' dihapus
       {
         path: 'siswa',
         name: 'siswa.dashboard',
         component: SiswaDashboardView,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, role: 'siswa' },
       },
       {
         path: 'siswa/profil',
         name: 'siswa.profil',
         component: SiswaProfileView,
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, role: 'siswa' },
       },
       {
-        path: 'siswa/pemetaan',
+        path: 'siswa/pretest',
+        name: 'siswa.pretest',
+        component: SiswaPretestView,
+        meta: { requiresAuth: true, role: 'siswa' },
+      },
+      {
+        // id opsional: halaman masih bisa dibuka dari riwayat atau dashboard
+        // tanpa ID, dan view akan Resolve sendiri ke pre-test terakhir.
+        path: 'siswa/pemetaan/:id?',
         name: 'siswa.pemetaan',
-        component: PlaceholderView,
-        meta: { requiresAuth: true, title: 'Pemetaan Kompetensi' },
+        component: PemetaanKompetensiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Pemetaan Kompetensi' },
       },
       {
         path: 'siswa/materi',
         name: 'siswa.materi',
-        component: PlaceholderView,
-        meta: { requiresAuth: true, title: 'Materi' },
+        component: MateriView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Materi' },
+      },
+      {
+        path: 'siswa/latihan/:quizId',
+        name: 'siswa.latihan',
+        component: LatihanView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Latihan' },
       },
       {
         path: 'siswa/progress',
         name: 'siswa.progress',
-        component: PlaceholderView,
-        meta: { requiresAuth: true, title: 'Progress Belajar' },
+        component: ProgressView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Progress Belajar' },
       },
       {
         path: 'siswa/simulasi',
         name: 'siswa.simulasi',
-        component: PlaceholderView,
-        meta: { requiresAuth: true, title: 'Simulasi Seleksi' },
+        component: SimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Simulasi Seleksi' },
+      },
+      {
+        path: 'siswa/simulasi/ujian/:simulasiId',
+        name: 'siswa.ujian',
+        component: UjianSimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Simulasi' },
+      },
+      {
+        path: 'siswa/simulasi/hasil/:hasilId',
+        name: 'siswa.simulasi.hasil',
+        component: HasilSimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Hasil Simulasi' },
+      },
+      {
+        path: 'siswa/simulasi/hasil/:hasilId/pembahasan',
+        name: 'siswa.simulasi.review',
+        component: ReviewSimulasiView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Pembahasan' },
       },
       {
         path: 'siswa/riwayat',
         name: 'siswa.riwayat',
-        component: PlaceholderView,
-        meta: { requiresAuth: true, title: 'Riwayat Hasil' },
+        component: RiwayatView,
+        meta: { requiresAuth: true, role: 'siswa', title: 'Riwayat Hasil' },
       },
       {
         path: 'admin',
@@ -93,26 +166,33 @@ export function setupGuard(router) {
   router.beforeEach(async (to) => {
     const auth = useAuthStore()
 
-    // 1. Hanya sekali per load: isi user dari cookie via /auth/me.
+    // BYPASS KHUSUS SLICING (dev saja): tanpa backend pun bisa buka halaman
+    // terproteksi. Aktifkan di .env: VITE_BYPASS_AUTH=true (+ VITE_BYPASS_ROLE
+    // = siswa|super_admin). Aman: import.meta.env.DEV false di production
+    // build sehingga cabang ini hilang total dari bundle prod.
+    if (import.meta.env.DEV && import.meta.env.VITE_BYPASS_AUTH === 'true' && !auth.initialized) {
+      const role = import.meta.env.VITE_BYPASS_ROLE === 'super_admin' ? 'super_admin' : 'siswa'
+      auth.user = { id: 'dev-1', nama: 'Dev Siswa', email: 'dev@local.id', role, created_at: null }
+      auth.initialized = true
+    }
+
     if (!auth.initialized) await auth.fetchMe()
 
-    // 2. Belum login dilarang masuk area auth.
-    if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    const loggedIn = !!auth.user
+
+    if (to.meta.requiresAuth && !loggedIn) {
       return { name: 'login', query: { redirect: to.fullPath } }
     }
 
-    // 3. Sudah login dilarang kembali ke halaman tamu.
-    if (to.meta.guestOnly && auth.isAuthenticated) {
+    if (to.meta.guestOnly && loggedIn) {
       return dashboardFor(auth.user.role)
     }
 
-    // 4. Role tidak cocok (mis. siswa buka /admin).
     if (to.meta.role && auth.user?.role !== to.meta.role) {
       return { name: 'forbidden' }
     }
 
-    // 5. `/` diarahkan ke dashboard sesuai role.
-    if (to.name === 'home') {
+    if (to.name === 'landing' && loggedIn) {
       return dashboardFor(auth.user.role)
     }
 

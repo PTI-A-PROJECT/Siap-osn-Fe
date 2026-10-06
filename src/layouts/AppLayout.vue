@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { useProgressStore } from '@/stores/progress.js'
 
+const route = useRoute()
 const auth = useAuthStore()
 const progress = useProgressStore()
 
@@ -30,9 +32,6 @@ const menuAdmin = [{ label: 'Dashboard', to: { name: 'admin.dashboard' }, icon: 
 const isAdmin = computed(() => auth.user?.role === 'super_admin')
 const menu = computed(() => (isAdmin.value ? menuAdmin : menuSiswa))
 
-// Streak dihitung dari aktivitas nyata siswa; 0 untuk akun yang belum mengerjakan apa pun.
-const streak = computed(() => progress.data.streak)
-
 // Sidebar ada di semua halaman siswa, jadi data progress dimuat dari sini.
 onMounted(() => {
   if (!isAdmin.value) progress.fetchDashboard()
@@ -42,7 +41,7 @@ onMounted(() => {
 <template>
   <div class="flex min-h-screen bg-[#f5f8fc]">
     <!-- Sidebar -->
-    <aside class="sticky top-0 flex h-screen w-[250px] shrink-0 flex-col bg-[#0a1f47] px-4 py-6">
+    <aside v-if="route.name !== 'siswa.pretest'" class="sticky top-0 flex h-screen w-[250px] shrink-0 flex-col bg-[#0a1f47] px-4 py-6">
       <div class="mb-6 flex items-center gap-3 px-2">
         <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0a1f47]">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -67,20 +66,9 @@ onMounted(() => {
         </RouterLink>
       </nav>
 
-      <div v-if="!isAdmin" class="mt-6 rounded-2xl border border-[#2a5db0]/60 bg-[#12336f] p-4 text-white">
-        <template v-if="streak > 0">
-          <p class="text-base font-bold leading-snug">{{ streak }} hari berturut-turut!</p>
-          <p class="mt-1 text-xs leading-relaxed text-white/70">
-            Belajar lagi hari ini biar streak-mu terus jalan
-          </p>
-        </template>
-        <template v-else>
-          <p class="text-base font-bold leading-snug">Belum ada streak</p>
-          <p class="mt-1 text-xs leading-relaxed text-white/70">
-            Mulai belajar hari ini untuk memulai streak-mu
-          </p>
-        </template>
-      </div>
+      <!-- Kartu streak disembunyikan: backend belum punya endpoint streak,
+           jadi angkanya selalu 0 dan selalu tampil "Belum ada streak".
+           Lihat keputusan #4 di PLAN-INTEGRASI-LANJUTAN.md §7.2. -->
     </aside>
 
     <!-- Konten halaman -->

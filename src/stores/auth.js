@@ -1,13 +1,31 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { api } from '@/lib/api.js'
+import { authService } from '@/services/auth.js'
+import { useLatihanStore } from '@/stores/latihan.js'
+import { useMateriStore } from '@/stores/materi.js'
+import { usePretestStore } from '@/stores/pretest.js'
 import { useProgressStore } from '@/stores/progress.js'
+import { useRiwayatStore } from '@/stores/riwayat.js'
+import { useSimulasiStore } from '@/stores/simulasi.js'
 
-// Analogi Laravel: Auth::user() di sisi browser.
-// Token TIDAK PERNAH disimpan di sini — cookie httpOnly diurus browser.
+// Store tidak tahu HTTP/backend: token persisten + request lewat
+// authService, bentuk user dari services/mappers/user.js.
+
+// Tidak cukup hanya progress — pretest/latihan/materi/riwayat/simulasi
+// menyimpan soal, jawaban, dan id percobaan milik akun sebelumnya.
+function resetDataAkun() {
+  useProgressStore().$reset()
+  usePretestStore().$reset()
+  useLatihanStore().$reset()
+  useMateriStore().$reset()
+  useRiwayatStore().$reset()
+  useSimulasiStore().$reset()
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const initialized = ref(false)
+  const token = ref(authService.tokenTersimpan())
 
   const isAuthenticated = computed(() => user.value !== null)
   const isSuperAdmin = computed(() => user.value?.role === 'super_admin')
@@ -20,58 +38,84 @@ export const useAuthStore = defineStore('auth', () => {
     return String(u.nama ?? u.nama_lengkap ?? u.name ?? u.full_name ?? '').trim()
   })
 
+  function saveToken(t) {
+    token.value = t
+    authService.simpanToken(t)
+  }
+
+  let meInflight = null // navigasi beruntun saat boot tidak memanggil /auth/me dua kali
+
   // Dipanggil sekali oleh router guard saat aplikasi dibuka.
-  async function fetchMe() {
+  function fetchMe() {
+    meInflight ??= muatUser().finally(() => {
+      meInflight = null
+    })
+    return meInflight
+  }
+
+  async function muatUser() {
+    if (!token.value) {
+      user.value = null
+      initialized.value = true
+      return
+    }
     try {
-      const { data } = await api.get('/auth/me')
-      user.value = data.data
+      user.value = await authService.me()
     } catch {
       user.value = null
+      saveToken(null)
     } finally {
       initialized.value = true
     }
   }
 
   async function login(payload) {
-    const { data } = await api.post('/auth/login', payload)
-    useProgressStore().$reset() // pastikan tidak ada sisa data akun sebelumnya
-    user.value = data.data.user
+    const res = await authService.login(payload)
+    resetDataAkun() // pastikan tidak ada sisa data akun sebelumnya
+    saveToken(res.token)
+    user.value = res.user
     return user.value
   }
 
   // Tidak otomatis login — pemanggil redirect ke /login.
-  async function register(payload) {
-    const { data } = await api.post('/auth/register', payload)
-    return data.data
+  function register(payload) {
+    return authService.register(payload)
   }
 
-  // Simpan perubahan profil (nama, email, sekolah, kelas) dari halaman Profil.
+  // Simpan perubahan profil (nama, email) dari halaman Profil.
+  // sekolah/kelas hanya disimpan lokal (belum ada kolomnya di backend).
   // Karena sapaan & avatar membaca user.value, nama baru langsung tampil di mana-mana.
   async function updateProfile(payload) {
-    const { data } = await api.put('/auth/profile', payload)
-    user.value = { ...user.value, ...payload, ...(data?.data ?? {}) }
+    const terbaru = await authService.updateProfile({
+      nama: payload.nama ?? payload.name,
+      email: payload.email,
+    })
+    user.value = { ...user.value, ...payload, ...terbaru }
     return user.value
   }
 
   async function logout() {
     try {
-      await api.post('/auth/logout')
+      await authService.logout()
     } catch {
       // Abaikan: sesi lokal tetap dibersihkan agar user kembali ke /login.
     } finally {
       user.value = null
-      useProgressStore().$reset()
+      saveToken(null)
+      resetDataAkun()
     }
   }
 
   function $reset() {
     user.value = null
     initialized.value = false
-    useProgressStore().$reset()
+    saveToken(null)
+    resetDataAkun()
   }
 
   return {
     user,
+    token,
     initialized,
     isAuthenticated,
     isSuperAdmin,
