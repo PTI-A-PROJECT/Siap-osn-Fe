@@ -41,7 +41,10 @@
     </header>
 
     <!-- STATUS AWAL: PILIH TINGKAT / MEMUAT / GALAT -->
-    <section v-if="!bolehMengerjakan" class="mulai-wrap">
+    <section
+      v-if="!bolehMengerjakan && pretest.status !== STATUS.MENILAI"
+      class="mulai-wrap"
+    >
       <div class="card mulai">
         <template v-if="memuatAwal">
           <h2>Menyiapkan pre-test…</h2>
@@ -76,6 +79,17 @@
             {{ pretest.loading ? 'Memulai…' : 'Mulai Pre-Test' }}
           </button>
         </template>
+      </div>
+    </section>
+
+    <!-- STATUS MENILAI: jawaban terkunci, nilai belum keluar -->
+    <section v-else-if="pretest.status === STATUS.MENILAI" class="mulai-wrap">
+      <div class="card mulai menilai">
+        <h2>Jawabanmu sedang dinilai</h2>
+        <p class="mulai-desc">
+          Jawabanmu sudah dikumpulkan dan sedang dinilai. Halaman ini akan berpindah otomatis
+          setelah nilai siap.
+        </p>
       </div>
     </section>
 
@@ -323,6 +337,25 @@ const soal = computed(() => pretest.soal)
 const total = computed(() => soal.value.length)
 const bolehMengerjakan = computed(() => pretest.status === STATUS.MENGERJAKAN)
 
+/* ---------- Polling nilai (status assessing) ---------- */
+let timerPolling = null
+function stopPolling() {
+  clearInterval(timerPolling)
+  timerPolling = null
+}
+function mulaiPolling() {
+  stopPolling()
+  timerPolling = setInterval(async () => {
+    const hasil = await pretest.cekHasil()
+    if (!hasil) return
+    stopPolling()
+    progress.markPreTestCompleted()
+    await progress.fetchDashboard({ force: true }).catch(() => {})
+    // id pager ditambahkan di Fase 5.1 (route jadi `pemetaan/:id?`).
+    router.push({ name: 'siswa.pemetaan' })
+  }, 5000)
+}
+
 /* ---------- State awal: pilih tingkat ---------- */
 const tingkatDipilih = ref(null)
 const memuatAwal = ref(true)
@@ -404,17 +437,27 @@ async function siapkanAwal() {
     try {
       await pretest.lanjutkan({ id: tersimpan.id })
     } catch {
-      galatAwal.value = 'Tidak dapat membuka pre-test tersimpan. Coba lagi.'
-      memuatAwal.value = false
-      return
+      // ID sudah dibuang store (404) -> lanjut ke pemilih tingkat di bawah.
+      if (pretest.idTersimpan()) {
+        galatAwal.value = 'Tidak dapat membuka pre-test tersimpan. Coba lagi.'
+        memuatAwal.value = false
+        return
+      }
     }
     if (pretest.status === STATUS.SELESAI) {
       router.replace({ name: 'siswa.pemetaan' })
       return
     }
-    seedJawaban()
-    memuatAwal.value = false
-    return
+    if (pretest.status === STATUS.MENILAI) {
+      mulaiPolling()
+      memuatAwal.value = false
+      return
+    }
+    if (pretest.status === STATUS.MENGERJAKAN) {
+      seedJawaban()
+      memuatAwal.value = false
+      return
+    }
   }
   // Belum ada yang berjalan -> pemilih tingkat manual.
   try {
@@ -450,10 +493,15 @@ async function kumpulkan() {
   if (mengirim.value || pretest.status !== STATUS.MENGERJAKAN) return
   mengirim.value = true
   try {
-    await pretest.kumpulkan()
+    const hasil = await pretest.kumpulkan()
+    modalSelesai.value = false
+    if (!hasil) {
+      // 503 HASIL_SEDANG_DIPROSES: jawaban sudah terkunci, tunggu nilai.
+      mulaiPolling()
+      return
+    }
     progress.markPreTestCompleted()
     await progress.fetchDashboard({ force: true }).catch(() => {})
-    modalSelesai.value = false
     router.push({ name: 'siswa.pemetaan' })
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Gagal mengumpulkan', detail: pesanError(err), life: 4000 })
@@ -515,6 +563,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
+  stopPolling()
   for (const k of Object.keys(timerSimpan)) clearTimeout(timerSimpan[k])
 })
 
@@ -907,6 +956,7 @@ button { font-family: inherit; cursor: pointer; }
 .tingkat-opsi.aktif { border-color: #3b6fe0; background: #f6f9ff; }
 .tingkat-opsi:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-mulai { background: #1e3a8a; border: 0; color: #fff; height: 44px; padding: 0 28px; font-size: 15px; font-weight: 600; }
+.mulai.menilai { max-width: 520px; text-align: center; }
 
 /* Konteks & gambar soal dari backend */
 .konteks {
