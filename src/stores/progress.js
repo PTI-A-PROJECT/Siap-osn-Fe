@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { dashboardKosong } from '@/services/mappers/dashboard.js'
 import { belajarService } from '@/services/belajar.js'
+import { riwayatService } from '@/services/riwayat.js'
 import { siswaService } from '@/services/siswa.js'
 import { usePretestStore } from '@/stores/pretest.js'
 import { useRiwayatStore } from '@/stores/riwayat.js'
@@ -94,6 +95,23 @@ export const useProgressStore = defineStore('progress', () => {
             badge: 'Wajib',
           })),
       }
+      // Statistik simulasi (P4): kartu "Rata-rata Nilai Simulasi" masih
+      // nol karena tidak ada endpoint agregat. Diambil dari riwayat
+      // simulasi, jadi batasnya 100 baris terbaru.
+      const simulasi = await riwayatService
+        .daftar({ jenis: 'simulasi', perPage: 100, signal })
+        .catch(() => null)
+      if (simulasi) {
+        const nilai = simulasi.items.map((i) => i.nilai).filter((n) => n != null)
+        data.value = {
+          ...data.value,
+          simulasiDiikuti: simulasi.total,
+          rataRataNilai: nilai.length
+            ? Math.round(nilai.reduce((a, b) => a + b, 0) / nilai.length)
+            : 0,
+        }
+      }
+
       // Cuplikan riwayat terbaru: opsional — gagal dimuat tidak menandai
       // error dashboard (bagian ini punya kondisi kosong sendiri).
       if (signal.aborted) return
