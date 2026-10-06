@@ -44,8 +44,18 @@ const subjudul = computed(() => {
 
 /* ---------- Banner ---------- */
 
-const banner = computed(() =>
-  sudahPreTest.value
+// PUTARAN_HABIS: kuota simulasi habis tanpa lulus. Backend mengizinkan
+// pre-test baru, jadi banner menawarkan putaran baru, bukan sekadar
+// "lanjutkan belajar".
+const banner = computed(() => {
+  if (d.value.perluPretestUlang) {
+    return {
+      judul: 'Kuota Simulasi Putaran Ini Habis',
+      isi: 'Ambil pre-test ulang untuk memulai putaran baru dan mendapatkan peta materi yang diperbarui.',
+    }
+  }
+
+  return sudahPreTest.value
     ? {
         judul: 'Lanjutkan Perjalanan OSN Informatika-mu!',
         isi: 'Teruskan belajar sesuai rekomendasi materi, lalu ikuti simulasi untuk mengukur kesiapanmu.',
@@ -53,8 +63,8 @@ const banner = computed(() =>
     : {
         judul: 'Mulai Perjalanan OSN Informatika-mu!',
         isi: 'Kamu belum mengikuti tes pemetaan awal. Silahkan ambil pre-test terlebih dahulu agar sistem dapat mendeteksi kekuatanmu dan membuka kurikulum belajar yang tepat sasaran.',
-      },
-)
+      }
+})
 
 /* ---------- Kartu Statistik ---------- */
 
@@ -248,6 +258,15 @@ const dash = computed(() => {
         >
           {{ banner.isi }}
         </p>
+
+        <button
+          v-if="d.perluPretestUlang"
+          type="button"
+          class="mt-4 rounded-full bg-white px-6 py-2.5 text-[13px] font-bold text-[#0b2150]"
+          @click="mulaiPretest"
+        >
+          Ambil Pre-Test Ulang →
+        </button>
       </section>
 
       <!-- ========================================= -->

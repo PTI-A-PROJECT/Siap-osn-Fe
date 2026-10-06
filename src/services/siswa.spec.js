@@ -79,7 +79,23 @@ describe('siswaService', () => {
     )
     const hasil = await siswaService.dashboard({})
     expect(hasil.preTestSelesai).toBe(false)
+    expect(hasil.perluPretestUlang).toBe(false)
     expect(hasil.hasilTerakhir).toBeNull()
+  })
+
+  it('PUTARAN_HABIS menawarkan pre-test ulang', async () => {
+    api.get.mockResolvedValue(
+      responsDashboard({
+        tingkat_aktif_id: 1,
+        tingkat_aktif: 'Kabupaten',
+        tingkat: [{ tingkat_id: 1, nama_tingkat: 'Kabupaten', urutan: 1, tingkat_terbuka: true, tahap: 'PUTARAN_HABIS', hasil_simulasi_terakhir: null }],
+      }),
+    )
+    const hasil = await siswaService.dashboard({})
+    // Tetap di himpunan "pre-test selesai" supaya materi/riwayat putaran lama
+    // bisa dibuka, tapi dashboard harus gladly menawarkan putaran baru.
+    expect(hasil.preTestSelesai).toBe(true)
+    expect(hasil.perluPretestUlang).toBe(true)
   })
 
   it('dashboard kosong tetap aman dipakai UI', async () => {

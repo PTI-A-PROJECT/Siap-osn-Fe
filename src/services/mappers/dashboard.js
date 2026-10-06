@@ -58,6 +58,7 @@ const TINGKATAN_DEFAULT = [
 export function dashboardKosong() {
   return {
     preTestSelesai: false,
+    perluPretestUlang: false,
     tingkatAktifId: null,
     tingkat: null,
     tahap: null,
@@ -89,6 +90,9 @@ export function mapDashboard(raw) {
 
   return {
     preTestSelesai: aktif ? TAHAP_PRETEST_SELESAI.has(aktif.tahap) : false,
+    // Kuota simulasi habis tanpa lulus: backend mengizinkan pre-test baru,
+    // jadi dashboard harus menawarkan-nya — bukan considers selesai.
+    perluPretestUlang: aktif?.tahap === 'PUTARAN_HABIS',
     tingkatAktifId: r.tingkat_aktif_id ?? aktif?.tingkat_id ?? null,
     tingkat: r.tingkat_aktif ?? aktif?.nama_tingkat ?? null,
     tahap: aktif?.tahap ?? null,
@@ -105,6 +109,7 @@ export function mapDashboard(raw) {
       : TINGKATAN_DEFAULT,
     hasilTerakhir: hasilLain
       ? {
+          id: hasilLain.id ?? null,
           judul: `Simulasi — Tingkat ${tingkatHasil?.nama_tingkat ?? ''}`.trim(),
           tanggal: hasilLain.selesai_pada ?? null,
           nilai:
