@@ -47,6 +47,9 @@ function ruteBaris(r) {
   if (r.jenis === 'simulasi') {
     return { name: 'siswa.simulasi.hasil', params: { hasilId: r.referensiId } }
   }
+  if (r.jenis === 'pretest') {
+    return { name: 'siswa.pemetaan', params: { id: r.referensiId } }
+  }
   return null
 }
 </script>

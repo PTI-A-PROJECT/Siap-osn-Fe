@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { belajarService } from '@/services/belajar.js'
+import { riwayatService } from '@/services/riwayat.js'
 import { siswaService } from '@/services/siswa.js'
 import { useProgressStore } from '@/stores/progress.js'
 
 vi.mock('@/services/siswa.js', () => ({
   siswaService: { dashboard: vi.fn() },
+}))
+
+vi.mock('@/services/riwayat.js', () => ({
+  riwayatService: { daftar: vi.fn(async () => ({ items: [], total: 0 })) },
 }))
 
 vi.mock('@/services/belajar.js', () => ({
@@ -28,6 +33,7 @@ const hasil = { preTestSelesai: false, materiSelesai: 0, materiTotal: 0 }
 beforeEach(() => {
   setActivePinia(createPinia())
   vi.resetAllMocks()
+  riwayatService.daftar.mockResolvedValue({ items: [], total: 0 })
 })
 
 describe('progress store', () => {
@@ -35,9 +41,43 @@ describe('progress store', () => {
     siswaService.dashboard.mockResolvedValue(hasil)
     const progress = useProgressStore()
     await progress.fetchDashboard()
-    expect(progress.data).toEqual({ ...hasil, riwayat: [], kompetensi: [], rekomendasi: [] })
+    expect(progress.data).toMatchObject({
+      ...hasil,
+      riwayat: [],
+      kompetensi: [],
+      rekomendasi: [],
+      simulasiDiikuti: 0,
+      rataRataNilai: 0,
+    })
     expect(progress.loaded).toBe(true)
     expect(progress.loading).toBe(false)
+  })
+
+  it('statistik simulasi dihitung dari riwayat, bukan nol placeholder', async () => {
+    siswaService.dashboard.mockResolvedValue(hasil)
+    riwayatService.daftar.mockResolvedValue({
+      items: [{ nilai: 60 }, { nilai: 80 }, { nilai: 100 }],
+      total: 3,
+    })
+    const progress = useProgressStore()
+    await progress.fetchDashboard()
+    await vi.waitFor(() => expect(progress.data.simulasiDiikuti).toBe(3))
+    expect(riwayatService.daftar).toHaveBeenCalledWith(
+      expect.objectContaining({ jenis: 'simulasi', perPage: 100 }),
+    )
+    expect(progress.data.rataRataNilai).toBe(80)
+  })
+
+  it('nilai simulasi null diabaikan saat menghitung rata-rata', async () => {
+    siswaService.dashboard.mockResolvedValue(hasil)
+    riwayatService.daftar.mockResolvedValue({
+      items: [{ nilai: 50 }, { nilai: null }, { nilai: 70 }],
+      total: 3,
+    })
+    const progress = useProgressStore()
+    await progress.fetchDashboard()
+    await vi.waitFor(() => expect(progress.data.simulasiDiikuti).toBe(3))
+    expect(progress.data.rataRataNilai).toBe(60)
   })
 
   it('data segar tidak memicu request ulang kecuali force', async () => {

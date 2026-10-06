@@ -1,32 +1,77 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserMenu from '@/components/UserMenu.vue'
+import { riwayatService } from '@/services/riwayat.js'
+import { useMateriStore } from '@/stores/materi.js'
 import { usePretestStore } from '@/stores/pretest.js'
+import { STATUS } from '@/stores/pretest.js'
 
-// Hasil dibaca dari store pre-test (diisi setelah submit).
-// Refresh langsung di URL ini: coba resume dari ID tersimpan.
+// Hasil dibaca dari store pre-test. Route memakai id opsional: setelah
+// submit sukses id tersimpan dihapus, jadi tanpa id halaman ini harus
+// menemukan sendiri pre-test terakhir lewat riwayat — kalau tidak,
+// refresh akan selalu kosong.
 const route = useRoute()
 const router = useRouter()
 const pretest = usePretestStore()
+const materi = useMateriStore()
 
 const memuat = ref(true)
 
 onMounted(async () => {
-  if (!pretest.hasil) {
-    const tersimpan = pretest.idTersimpan()
-    if (tersimpan?.id) {
-      try {
-        await pretest.lanjutkan({ id: tersimpan.id })
-      } catch {
-        // Gagal: tampilkan kondisi kosong di bawah.
+  const idDariUrl = Number(route.params.id)
+
+  // Store masih hangat (pindah halaman tanpa reload).
+  if (!idDariUrl && pretest.hasil) {
+    memuat.value = false
+    return
+  }
+
+  try {
+    if (Number.isFinite(idDariUrl) && idDariUrl > 0) {
+      await pretest.lanjutkan({ id: idDariUrl })
+      // Hasil belum keluar (pretest masih dikerjakan): kembalikan ke ujian.
+      if (pretest.status === STATUS.MENGERJAKAN) {
+        router.replace({ name: 'siswa.pretest' })
+        return
       }
+    } else {
+      // Tanpa id: pakai pre-test terakhir dari riwayat.
+      const { items } = await riwayatService.daftar({ jenis: 'pretest', perPage: 1 })
+      const terakhir = items[0]?.referensiId
+      if (terakhir) {
+        router.replace({ name: 'siswa.pemetaan', params: { id: terakhir } })
+        return
+      }
+      // Tidak ada riwayat sama sekali -> kondisi kosong di bawah.
     }
+  } catch {
+    // Gagal (404/403): tampilkan kondisi kosong di bawah.
   }
   memuat.value = false
 })
 
 const hasil = computed(() => pretest.hasil)
+
+// Nama materi asli dari GET /api/materi (bukan lagi "Materi {id}").
+const namaMateriById = computed(
+  () => new Map(materi.daftar.map((m) => [m.id, m.judul])),
+)
+const prioritasWajib = computed(
+  () => new Map((hasil.value?.materiWajib ?? []).map((m) => [m.materiId, m.prioritas])),
+)
+
+async function muatJudulMateri() {
+  const tingkatId = hasil.value?.tingkatId
+  if (!tingkatId || materi.tingkatId === tingkatId) return
+  await materi.fetchDaftar({ tingkatId }).catch(() => {})
+}
+
+// Judul materi dibutuhkan untuk merender tabel, jadi dipanggil begitu
+// hasil tersedia (onMounted mungkin selesai sebelum hasil ada).
+watchEffect(() => {
+  if (hasil.value) muatJudulMateri()
+})
 
 const skor = computed(() => (hasil.value?.nilai == null ? 0 : Math.round(hasil.value.nilai)))
 const R = 44
@@ -43,12 +88,14 @@ const totalBenar = computed(() =>
   (hasil.value?.pemetaan ?? []).reduce((a, p) => a + p.jumlahBenar, 0),
 )
 
-// TODO P3: ganti dengan judul asli dari GET /api/materi.
-const namaMateri = (materiId) => `Materi ${materiId}`
+// Fallback "Materi {id}" hanya sampai judulnya termuat.
+const namaMateri = (materiId) => namaMateriById.value.get(materiId) ?? `Materi ${materiId}`
 
 const ringkasanTopik = computed(() =>
   (hasil.value?.pemetaan ?? []).map((p) => ({
+    materiId: p.materiId,
     nama: namaMateri(p.materiId),
+    wajib: prioritasWajib.value.get(p.materiId) ?? null,
     benar: `${p.jumlahBenar}/${p.jumlahSoal}`,
     status: statusNilai(p.persentase),
   })),
@@ -56,7 +103,9 @@ const ringkasanTopik = computed(() =>
 
 const topik = computed(() =>
   (hasil.value?.pemetaan ?? []).map((p) => ({
+    materiId: p.materiId,
     nama: namaMateri(p.materiId),
+    wajib: prioritasWajib.value.get(p.materiId) ?? null,
     nilai: p.persentase == null ? 0 : Math.round(p.persentase),
   })),
 )
@@ -139,8 +188,11 @@ const teksTren = { naik: '↑ Naik', turun: '↓ Turun', stabil: '→ Stabil' }
             <div class="card pad">
               <h3>Ringkasan Per Topik</h3>
               <ul class="ringkas">
-                <li v-for="t in ringkasanTopik" :key="t.nama">
-                  <span>{{ t.nama }}</span>
+                <li v-for="t in ringkasanTopik" :key="t.materiId">
+                  <span>
+                    {{ t.nama }}
+                    <em v-if="t.wajib" class="wajib">Wajib · prioritas {{ t.wajib }}</em>
+                  </span>
                   <span><b :class="t.status">{{ t.benar }}</b> benar</span>
                 </li>
               </ul>
@@ -165,8 +217,11 @@ const teksTren = { naik: '↑ Naik', turun: '↓ Turun', stabil: '→ Stabil' }
               <button type="button" class="link-btn">Unduh laporan</button>
             </div>
 
-            <div v-for="t in topik" :key="t.nama" class="bar-row">
-              <span class="bar-name">{{ t.nama }}</span>
+            <div v-for="t in topik" :key="t.materiId" class="bar-row">
+              <span class="bar-name">
+                {{ t.nama }}
+                <em v-if="t.wajib" class="wajib">Wajib · prioritas {{ t.wajib }}</em>
+              </span>
               <div class="track"><div class="fill" :class="statusNilai(t.nilai)" :style="{ width: t.nilai + '%' }"></div></div>
               <span class="bar-val">{{ t.nilai }}%</span>
               <span class="bar-label" :class="statusNilai(t.nilai)">{{ labelStatus[statusNilai(t.nilai)] }}</span>
@@ -300,7 +355,8 @@ const teksTren = { naik: '↑ Naik', turun: '↓ Turun', stabil: '→ Stabil' }
 
 /* Ringkasan topik */
 .ringkas { list-style: none; margin: 0; padding: 0; }
-.ringkas li { display: flex; justify-content: space-between; padding: 6px 0; font-size: 11.5px; color: #3a4558; }
+.ringkas li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 11.5px; color: #3a4558; }
+.wajib { font-style: normal; font-size: 10.5px; font-weight: 600; color: var(--amber); }
 .ringkas b { font-weight: 600; }
 .ringkas b.ok, .bar-label.ok { color: var(--ok); }
 .ringkas b.mid, .bar-label.mid { color: var(--mid); }

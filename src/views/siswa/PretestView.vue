@@ -351,8 +351,7 @@ function mulaiPolling() {
     stopPolling()
     progress.markPreTestCompleted()
     await progress.fetchDashboard({ force: true }).catch(() => {})
-    // id pager ditambahkan di Fase 5.1 (route jadi `pemetaan/:id?`).
-    router.push({ name: 'siswa.pemetaan' })
+    router.push({ name: 'siswa.pemetaan', params: { id: pretest.pretestId } })
   }, 5000)
 }
 
@@ -445,7 +444,7 @@ async function siapkanAwal() {
       }
     }
     if (pretest.status === STATUS.SELESAI) {
-      router.replace({ name: 'siswa.pemetaan' })
+      router.replace({ name: 'siswa.pemetaan', params: { id: pretest.pretestId } })
       return
     }
     if (pretest.status === STATUS.MENILAI) {
@@ -502,7 +501,7 @@ async function kumpulkan() {
     }
     progress.markPreTestCompleted()
     await progress.fetchDashboard({ force: true }).catch(() => {})
-    router.push({ name: 'siswa.pemetaan' })
+    router.push({ name: 'siswa.pemetaan', params: { id: pretest.pretestId } })
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Gagal mengumpulkan', detail: pesanError(err), life: 4000 })
     modalSelesai.value = false
