@@ -82,12 +82,25 @@ export async function logout(page) {
   // Dua bentuk tombol Keluar ada di aplikasi: UserMenu di sidebar (butuh
   // klik tombol akun dulu, lalu item role=menuitem), dan tombol langsung di
   // DashboardView admin.
+  //
+  // PENTING: jangan pakai count() untuk mengecek keberadaan elemen. count()
+  // TIDAK auto-wait — dia mengembalikan jumlah elemen saat itu juga. Kalau
+  // halaman masih render, UserMenu belum ter-mount, count() = 0, dan kita
+  // jatuh ke cabang else yang mencari tombol "Keluar" yang memang tidak ada
+  // di halaman siswa. Hasilnya timeout 15 detik dengan pesan yang menyesatkan,
+  // bukan diagnosis yang benar.
   const tombolAkun = page.locator('button[aria-haspopup="menu"]').first()
-  if (await tombolAkun.count()) {
+  const itemKeluar = page.getByRole('menuitem', { name: /^keluar$/i })
+  const tombolKeluar = page.getByRole('button', { name: /^keluar$/i }).first()
+
+  // waitFor() baru benar-benar menunggu render; isVisible() baru dinilai
+  // setelah batas waktu lulu.
+  await tombolAkun.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+  if (await tombolAkun.isVisible()) {
     await tombolAkun.click()
-    await page.getByRole('menuitem', { name: /^keluar$/i }).click()
+    await itemKeluar.click()
   } else {
-    await page.getByRole('button', { name: /^keluar$/i }).first().click()
+    await tombolKeluar.click()
   }
   await page.waitForURL(/\/login/)
 }
@@ -112,15 +125,18 @@ export async function seedPutaranSelesai(request, token, { tingkatId = 1 } = {})
     headers: { Authorization: `Bearer ${token}` },
     data: { tingkat_id: tingkatId },
   })
-  expect(mulai.status(), 'mulai pre-test').toBe(201)
+  // APIResponse.json() mengembalikan Promise -- lihat catatan di tokenUntuk.
+  const mulaiBody = await mulai.json()
+  expect(mulai.status(), `mulai pre-test -> ${JSON.stringify(mulaiBody)}`).toBe(201)
 
-  const pretest = mulai.json().data
+  const pretest = mulaiBody.data
   await jawabSemua(request, token, '/pretest', pretest.id, pretest.soal)
   const submit = await request.post(api(`/pretest/${pretest.id}/submit`), {
     headers: { Authorization: `Bearer ${token}` },
   })
-  expect(submit.status(), 'submit pre-test').toBe(200)
-  return submit.json().data
+  const submitBody = await submit.json()
+  expect(submit.status(), `submit pre-test -> ${JSON.stringify(submitBody)}`).toBe(200)
+  return submitBody.data
 }
 
 /** Isi jawaban semua soal dengan opsi pertama (pilihan ganda) atau teks. */
@@ -146,8 +162,13 @@ export async function tokenUntuk(request, akun) {
   const res = await request.post(api('/auth/login'), {
     data: { email: akun.email, password: akun.password },
   })
-  expect(res.status(), `login ${akun.email}`).toBe(200)
-  return res.json().data.token
+  // PENTING: APIResponse.json() mengembalikan Promise (json(): Promise<T> di
+  // types.d.ts). `res.json().data` tanpa await = undefined, lalu `.token`
+  // melempar "Cannot read properties of undefined (reading 'token')" --
+  // padahal HTTP-nya 200 dan body-nya lengkap. Gejalanya sangat menyesatkan.
+  const body = await res.json()
+  expect(res.status(), `login ${akun.email} -> ${JSON.stringify(body)}`).toBe(200)
+  return body.data.token
 }
 
 /**
@@ -156,7 +177,10 @@ export async function tokenUntuk(request, akun) {
  */
 export async function penuhiSyaratSimulasi(request, token, tingkatId = 1) {
   const headers = { Authorization: `Bearer ${token}` }
-  const materi = (await request.get(api(`/materi?tingkat_id=${tingkatId}`), { headers })).json().data
+
+  // APIResponse.json() mengembalikan Promise -- lihat catatan di tokenUntuk.
+  const resMateri = await request.get(api(`/materi?tingkat_id=${tingkatId}`), { headers })
+  const materi = (await resMateri.json()).data
 
   for (const m of materi.filter((x) => x.wajib)) {
     await request.put(api(`/materi/${m.id}/progress`), {
@@ -164,9 +188,9 @@ export async function penuhiSyaratSimulasi(request, token, tingkatId = 1) {
       data: { status: 'selesai' },
     })
     if (!m.quiz_id) continue
-    const mulai = await request.post(api(`/quiz/${m.quiz_id}/mulai`), { headers })
-    if (![200, 201].includes(mulai.status())) continue
-    const pj = mulai.json().data
+    const resMulai = await request.post(api(`/quiz/${m.quiz_id}/mulai`), { headers })
+    if (![200, 201].includes(resMulai.status())) continue
+    const pj = (await resMulai.json()).data
     await jawabSemua(request, token, '/quiz-pengerjaan', pj.id, pj.soal)
     await request.post(api(`/quiz-pengerjaan/${pj.id}/submit`), { headers })
   }

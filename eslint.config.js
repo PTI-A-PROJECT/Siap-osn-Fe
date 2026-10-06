@@ -22,6 +22,19 @@ export default defineConfig([
     },
   },
 
+  {
+    // playwright.config.js, e2e/**, dan scripts/** dijalankan oleh Node
+    // (Playwright CLI / Node CLI), bukan di dalam browser. Tanpa blok ini
+    // `process` dianggap undefined dan gate `bunx eslint .` gagal walau kodenya
+    // benar.
+    files: ['playwright.config.js', 'playwright.*.config.js', 'e2e/**/*.js', 'scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
 

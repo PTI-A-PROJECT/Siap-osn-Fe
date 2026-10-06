@@ -132,7 +132,14 @@ test.describe('form yang belum punya endpoint backend', () => {
     await page.goto('/siswa/profil')
     // Samakan basal: login + dashboard memang memanggil /auth/me dan
     // /dashboard, jadi yang dibandingkan adalah request SETELAH halaman siap.
+    //
+    // Tunggu networkidle DULU baru kosongkan basal. Heading bisa sudah tampil
+    // sementara request bawaan halaman masih in-flight; tanpa tunggu ini
+    // request tersebut bisa mendarat setelah `requests.length = 0` dan ikut
+    // terhitung. Gejalanya test ini flaky: lulus saat dijalankan sendirian,
+    // gagal saat jadi bagian suite penuh.
     await expect(page.getByRole('heading', { name: /profil akun/i })).toBeVisible()
+    await page.waitForLoadState('networkidle')
     requests.length = 0
 
     await page.locator('#pw-now').fill('password123')

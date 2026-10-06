@@ -48,3 +48,6 @@ package-lock.json
 /blob-report/
 /playwright/.cache/
 
+# Output smoke check (scripts/smoke-report.mjs)
+/reports/
+
