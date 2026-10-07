@@ -2,19 +2,19 @@
 const steps = [
   {
     title: 'Daftar',
-    text: 'Buat akun dengan nama, email, dan password dalam hitungan detik.',
+    text: 'Buat akun dengan nama, email, dan kata sandi.',
   },
   {
     title: 'Pilih Tingkat',
-    text: 'Tentukan tingkat seleksi yang sedang kamu ikuti: Kabupaten, Provinsi, atau Nasional.',
+    text: 'Pilih tingkat seleksi yang sedang kamu ikuti: Kabupaten atau Provinsi.',
   },
   {
     title: 'Kerjakan Pre-Test',
-    text: 'Sistem mengukur kompetensi awalmu dan memetakan area yang perlu ditingkatkan.',
+    text: 'Jawab soal pre-test untuk mengetahui kemampuan awal dan topik yang perlu diperkuat.',
   },
   {
     title: 'Belajar & Simulasi',
-    text: 'Ikuti materi yang direkomendasikan, lalu uji kesiapan lewat simulasi seleksi.',
+    text: 'Pelajari materi yang direkomendasikan, lalu uji kesiapanmu lewat simulasi seleksi.',
   },
 ]
 </script>
@@ -23,9 +23,9 @@ const steps = [
 <section id="cara-kerja" class="section section--navy-2">
       <div class="container">
         <small class="kicker">Alur belajar</small>
-        <h2 class="light">How it works</h2>
+        <h2 class="light">Cara kerja</h2>
         <p class="light-muted">
-          Empat langkah sederhana dari pendaftaran sampai siap menghadapi seleksi sesungguhnya.
+          Empat langkah dari mendaftar sampai siap menghadapi seleksi.
         </p>
         <ol class="steps">
           <li v-for="(s, i) in steps" :key="s.title">

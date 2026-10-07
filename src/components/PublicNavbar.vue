@@ -35,7 +35,7 @@ defineProps({
       </nav>
 
       <div class="pubnav__actions">
-        <RouterLink v-if="current !== 'login'" to="/login" class="pubnav__btn pubnav__btn--primary">Masuk</RouterLink>
+        <RouterLink v-if="current !== 'login'" to="/login" class="pubnav__btn pubnav__btn--outline">Masuk</RouterLink>
         <RouterLink v-if="current !== 'register'" to="/register" class="pubnav__btn pubnav__btn--primary">Daftar Gratis</RouterLink>
       </div>
     </div>
@@ -52,10 +52,11 @@ defineProps({
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 .pubnav__inner {
-  max-width: 1160px;
+  box-sizing: border-box;
+  max-width: 1360px;
   margin: 0 auto;
   min-height: 62px;
-  padding: 8px 24px;
+  padding: 8px clamp(24px, 3vw, 40px);
   display: grid;
   grid-template-columns: 180px 1fr 180px;
   align-items: center;
@@ -86,11 +87,12 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: clamp(20px, 3.2vw, 40px);
   margin: 0;
 }
 .pubnav__links a {
   font-size: 13px;
+  font-weight: 700;
   color: #334155;
   text-decoration: none;
   white-space: nowrap;
@@ -176,7 +178,7 @@ defineProps({
   outline-color: #f5c96a;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .pubnav__links {
     display: none;
   }
