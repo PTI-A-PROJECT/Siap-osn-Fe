@@ -34,8 +34,8 @@ const footerColumns = [
             <span>SIAP OSN</span>
           </a>
           <p>
-            Sistem Interaktif Adaptif Persiapan OSN — membantu siswa mempersiapkan diri menghadapi
-            seleksi OSN Bidang Informatika secara adaptif.
+            Sistem Interaktif Adaptif Persiapan OSN, platform belajar untuk siswa yang menyiapkan
+            seleksi OSN Bidang Informatika.
           </p>
         </div>
         <div v-for="col in footerColumns" :key="col.title" class="footer__col">

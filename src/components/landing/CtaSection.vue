@@ -6,7 +6,7 @@
 <section class="section section--navy cta">
       <div class="container cta__inner">
         <h2 class="light">Siap hadapi seleksi OSN Informatika?</h2>
-        <p class="light-muted">Mulai dengan pre-test gratis dan lihat langsung peta kompetensimu.</p>
+        <p class="light-muted">Mulai dengan pre-test gratis dan lihat peta kompetensimu.</p>
         <div class="cta__buttons">
           <a href="/register" class="btn btn--light">Daftar Gratis</a>
           <a href="/login" class="btn btn--outline">Sudah punya akun? Masuk</a>

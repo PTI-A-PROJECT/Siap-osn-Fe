@@ -1,30 +1,35 @@
 <script setup>
 const levels = [
-  { title: 'Kabupaten', text: 'Titik awal persiapan — membangun fondasi kompetensi dasar Informatika.' },
-  { title: 'Provinsi', text: 'Materi dan simulasi meningkat mengikuti standar seleksi tingkat provinsi.' },
+  {
+    title: 'Kabupaten',
+    text: 'Tahap awal untuk membangun dasar Informatika dan mengenali topik yang perlu diperkuat.',
+  },
+  {
+    title: 'Provinsi',
+    text: 'Materi dan simulasi lebih menantang, mengikuti standar seleksi tingkat provinsi.',
+  },
 ]
 </script>
 
 <template>
-<section id="tingkat" class="section section--soft">
-      <div class="container levels">
-        <small class="kicker kicker--center">Jenjang seleksi</small>
-        <h2 class="marked--center">Naik tingkat sesuai <span class="hl">pencapaianmu</span></h2>
-        <p class="levels__lead">
-          Tingkat berikutnya terbuka otomatis setelah kamu memenuhi ketentuan pada tingkat
-          sebelumnya.
-        </p>
-        <div class="levels__row">
-          <template v-for="l in levels" :key="l.title">
-            <article class="level">
-              <h3>{{ l.title }}</h3>
-              <p>{{ l.text }}</p>
-            </article>
-            <span class="levels__arrow" aria-hidden="true">→</span>
-          </template>
-        </div>
+  <section id="tingkat" class="section section--soft">
+    <div class="container levels">
+      <small class="kicker kicker--center">Jenjang seleksi</small>
+      <h2 class="marked--center">Naik tingkat sesuai <span class="hl">pencapaianmu</span></h2>
+      <p class="levels__lead">
+        Tingkat Provinsi terbuka setelah kamu memenuhi ketentuan di tingkat Kabupaten.
+      </p>
+      <div class="levels__row">
+        <template v-for="(l, i) in levels" :key="l.title">
+          <article class="level">
+            <h3>{{ l.title }}</h3>
+            <p>{{ l.text }}</p>
+          </article>
+          <span v-if="i < levels.length - 1" class="levels__arrow" aria-hidden="true">→</span>
+        </template>
       </div>
-    </section>
+    </div>
+  </section>
 </template>
 
 <style scoped src="./shared.css"></style>
@@ -40,35 +45,26 @@ const levels = [
 
 .levels__row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .level {
   background: #fff;
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 28px;
   height: 100%;
 }
 
 .level h3 {
-  font-size: 1rem;
+  font-size: 1.05rem;
   margin-bottom: 8px;
 }
 
 .level p {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.level h3 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-}
-
-.level p {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
   color: var(--muted);
 }
 

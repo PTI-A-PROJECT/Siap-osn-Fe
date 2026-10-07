@@ -8,8 +8,9 @@
         <div class="split__text">
           <h2>Kenapa persiapan OSN itu <span class="hl">sulit?</span></h2>
           <p>
-            Jenjang seleksi bertahap (Kabupaten → Provinsi → Nasional), materi yang luas, dan
-            minimnya simulasi realistis membuat siswa sulit tahu harus fokus belajar dari mana.
+            Seleksi OSN berjalan bertahap dari Kabupaten ke Provinsi, dengan materi yang luas dan
+            sedikit latihan yang menyerupai soal aslinya. Akibatnya banyak siswa bingung harus
+            mulai dari topik mana.
           </p>
           <a href="#solusi" class="btn btn--ghost">Lihat solusinya</a>
         </div>

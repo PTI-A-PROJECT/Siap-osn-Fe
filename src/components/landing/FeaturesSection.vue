@@ -1,53 +1,46 @@
 <script setup>
 const features = [
   {
-    icon: '📝',
     title: 'Pre-test Adaptif',
-    text: 'Mengukur kemampuan awal sesuai tingkat seleksi yang kamu pilih, sebelum masuk ke materi.',
+    text: 'Mengukur kemampuan awalmu sebelum mulai belajar, sesuai tingkat seleksi yang kamu pilih.',
   },
   {
-    icon: '🧭',
     title: 'Pemetaan Kompetensi Otomatis',
-    text: 'Sistem menganalisis hasil pre-test dan menunjukkan kompetensi mana yang sudah kuat dan yang masih perlu ditingkatkan.',
+    text: 'Hasil pre-test diolah menjadi peta kompetensi: topik mana yang sudah kuat dan mana yang masih lemah.',
     dark: true,
   },
   {
-    icon: '🎯',
     title: 'Rekomendasi Materi Personalisasi',
-    text: 'Belajar difokuskan pada materi yang paling kamu butuhkan, bukan menghabiskan waktu untuk topik yang sudah dikuasai.',
+    text: 'Materi disusun dari hasil pemetaanmu, jadi waktu belajar tidak habis untuk topik yang sudah kamu kuasai.',
   },
   {
-    icon: '🏁',
     title: 'Simulasi Seleksi Bertingkat',
-    text: 'Rasakan simulasi ujian yang merepresentasikan kondisi seleksi sesungguhnya di tiap tingkat.',
+    text: 'Simulasi ujian untuk tiap tingkat, dengan format dan tingkat kesulitan yang mendekati seleksi sebenarnya.',
   },
   {
-    icon: '💡',
     title: 'Pembahasan & Evaluasi Tiap Soal',
-    text: 'Setiap soal dilengkapi pembahasan agar kamu tahu persis letak kesalahan dan cara memperbaikinya.',
+    text: 'Setiap soal punya pembahasan, sehingga kamu tahu letak kesalahan dan cara memperbaikinya.',
     dark: true,
   },
   {
-    icon: '📈',
     title: 'Dashboard Progress Belajar',
-    text: 'Pantau perkembangan belajar, riwayat pre-test, latihan, dan simulasi dalam satu tempat.',
+    text: 'Lihat perkembangan belajar, riwayat pre-test, latihan, dan simulasi di satu halaman.',
   },
 ]
 </script>
 
 <template>
-<section id="fitur" class="section section--white">
-      <div class="container">
-        <h2 class="marked--block">Semua yang kamu butuhkan untuk <span class="hl">satu jalur persiapan</span></h2>
-        <div class="features">
-          <article v-for="f in features" :key="f.title" class="feature" :class="{ 'feature--dark': f.dark }">
-            <span class="feature__icon" aria-hidden="true">{{ f.icon }}</span>
-            <h3>{{ f.title }}</h3>
-            <p>{{ f.text }}</p>
-          </article>
-        </div>
+  <section id="fitur" class="section section--white">
+    <div class="container">
+      <h2 class="marked--block">Semua yang kamu butuhkan untuk <span class="hl">satu jalur persiapan</span></h2>
+      <div class="features">
+        <article v-for="f in features" :key="f.title" class="feature" :class="{ 'feature--dark': f.dark }">
+          <h3>{{ f.title }}</h3>
+          <p>{{ f.text }}</p>
+        </article>
       </div>
-    </section>
+    </div>
+  </section>
 </template>
 
 <style scoped src="./shared.css"></style>
@@ -63,37 +56,17 @@ const features = [
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 22px;
+  padding: 28px 26px;
 }
 
 .feature h3 {
-  font-size: 0.92rem;
-  margin-bottom: 8px;
+  font-size: 1rem;
+  margin-bottom: 10px;
 }
 
 .feature p {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.feature__icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: var(--soft);
-  margin-bottom: 26px;
-  font-size: 1.2rem;
-}
-
-.feature h3 {
-  font-size: 0.92rem;
-  margin-bottom: 8px;
-}
-
-.feature p {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
   color: var(--muted);
 }
 
@@ -101,18 +74,6 @@ const features = [
   background: var(--navy);
   border-color: var(--navy);
   color: #fff;
-}
-
-.feature--dark .feature__icon {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.feature--dark p {
-  color: #b7c4e2;
-}
-
-.feature--dark .feature__icon {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .feature--dark p {

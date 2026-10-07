@@ -1,65 +1,39 @@
 <script setup>
 const stats = [
-  { value: '3', label: 'Tingkat seleksi' },
+  { value: '2', label: 'Tingkat seleksi' },
   { value: '6', label: 'Kelompok fitur belajar' },
   { value: '100%', label: 'Materi dipersonalisasi' },
-]
-
-const competencies = [
-  { name: 'Struktur Data', value: 82, color: 'blue' },
-  { name: 'Algoritma Greedy', value: 54, color: 'blue' },
-  { name: 'Graf & Pohon', value: 38, color: 'yellow' },
-  { name: 'Dynamic Programming', value: 29, color: 'yellow' },
 ]
 </script>
 
 <template>
-<section class="hero">
-      <div class="container hero__grid">
-        <div class="hero__copy">
-          <span class="pill">Persiapan OSN Bidang Informatika</span>
-          <h1>Sistem Interaktif<br />Adaptif<br />Persiapan OSN</h1>
-          <p class="hero__lead">
-            Persiapkan dirimu menghadapi seleksi OSN Bidang Informatika secara adaptif — dari
-            tingkat Kabupaten hingga Nasional — dengan pemetaan kompetensi otomatis dan materi yang
-            dipersonalisasi.
-          </p>
-          <div class="hero__cta">
-            <a href="/register" class="btn btn--light">Mulai Pre-Test Gratis</a>
-            <a href="#cara-kerja" class="btn btn--outline">Lihat Cara Kerja</a>
-          </div>
-          <dl class="stats">
-            <div v-for="s in stats" :key="s.label">
-              <dt>{{ s.value }}</dt>
-              <dd>{{ s.label }}</dd>
-            </div>
-          </dl>
+  <section class="hero">
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <span class="pill">Persiapan OSN Bidang Informatika</span>
+        <h1>Sistem Interaktif<br />Adaptif<br />Persiapan OSN</h1>
+        <p class="hero__lead">
+          Platform belajar adaptif untuk persiapan OSN Bidang Informatika, dari tingkat Kabupaten
+          hingga Provinsi. Ikuti pre-test untuk memetakan kompetensimu, lalu dapatkan materi,
+          latihan, dan simulasi seleksi yang disesuaikan dengan hasilmu.
+        </p>
+        <div class="hero__cta">
+          <a href="/register" class="btn btn--light">Mulai Pre-Test Gratis</a>
+          <a href="#cara-kerja" class="btn btn--outline">Lihat Cara Kerja</a>
         </div>
-
-        <div class="map-card" role="img" aria-label="Contoh pemetaan kompetensi tingkat Provinsi">
-          <div class="map-card__head">
-            <strong>Pemetaan Kompetensi</strong>
-            <span class="pill pill--muted">Tingkat Provinsi</span>
+        <dl class="stats">
+          <div v-for="s in stats" :key="s.label">
+            <dt>{{ s.value }}</dt>
+            <dd>{{ s.label }}</dd>
           </div>
-          <ul class="bars">
-            <li v-for="c in competencies" :key="c.name">
-              <span class="bars__name">{{ c.name }}</span>
-              <span class="bars__track">
-                <span class="bars__fill" :class="`bars__fill--${c.color}`" :style="{ width: c.value + '%' }"></span>
-              </span>
-              <span class="bars__value">{{ c.value }}%</span>
-            </li>
-          </ul>
-          <div class="map-card__foot">
-            <div>
-              <small>Rekomendasi berikutnya</small>
-              <strong>Latihan Dynamic Programming Dasar</strong>
-            </div>
-            <a href="/register" class="btn btn--light btn--xs">Belajar</a>
-          </div>
-        </div>
+        </dl>
       </div>
-    </section>
+
+      <div class="hero__visual">
+        <img class="hero__logo" src="/logo-icon.png" alt="Logo SIAP OSN" />
+      </div>
+    </div>
+  </section>
 </template>
 
 <style scoped src="./shared.css"></style>
@@ -69,12 +43,11 @@ const competencies = [
   background: linear-gradient(180deg, var(--navy) 0%, #0b2245 100%);
   color: #fff;
   padding: 56px 0 72px;
-}
-
-.hero h1 {
-  font-size: clamp(2rem, 4.2vw, 2.9rem);
-  font-weight: 700;
-  margin: 18px 0 16px;
+  /* Tinggi minimal satu layar (dikurangi navbar) agar layar pertama penuh biru */
+  min-height: calc(100vh - 64px);
+  min-height: calc(100svh - 64px);
+  display: flex;
+  align-items: center;
 }
 
 .hero__grid {
@@ -93,7 +66,7 @@ const competencies = [
 .hero__lead {
   color: #c8d2ea;
   font-size: 0.95rem;
-  max-width: 46ch;
+  max-width: 52ch;
 }
 
 .hero__cta {
@@ -121,113 +94,20 @@ const competencies = [
   color: #9fb0d3;
 }
 
-.stats dt {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
+/* Logo di sisi kanan hero (menggantikan kartu pemetaan kompetensi) */
+.hero__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.stats dd {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #9fb0d3;
-}
-
-.map-card {
-  background: var(--navy-3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 22px;
+.hero__logo {
+  width: clamp(240px, 40vw, 500px);
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-}
-
-.map-card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.88rem;
-  margin-bottom: 18px;
-}
-
-.bars {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 14px;
-}
-
-.bars li {
-  display: grid;
-  grid-template-columns: 130px 1fr 36px;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.78rem;
-  color: #d6def0;
-}
-
-.bars li {
-  display: grid;
-  grid-template-columns: 130px 1fr 36px;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.78rem;
-  color: #d6def0;
-}
-
-.bars__track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.bars__fill {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-}
-
-.bars__fill--blue {
-  background: #4b8df8;
-}
-
-.bars__fill--yellow {
-  background: var(--yellow);
-}
-
-.bars__value {
-  text-align: right;
-}
-
-.map-card__foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 22px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.map-card__foot small {
-  display: block;
-  font-size: 0.68rem;
-  color: #9fb0d3;
-}
-
-.map-card__foot strong {
-  font-size: 0.85rem;
-}
-
-.map-card__foot small {
-  display: block;
-  font-size: 0.68rem;
-  color: #9fb0d3;
-}
-
-.map-card__foot strong {
-  font-size: 0.85rem;
 }
 
 .pill {
@@ -240,17 +120,9 @@ const competencies = [
   background: rgba(255, 255, 255, 0.12);
 }
 
-.pill--muted {
-  background: rgba(255, 255, 255, 0.1);
-  color: #d6def0;
-}
-
 @media (max-width: 900px) {
   .hero__grid {
     grid-template-columns: 1fr;
-  }
-  .bars li {
-    grid-template-columns: 110px 1fr 36px;
   }
 }
 
