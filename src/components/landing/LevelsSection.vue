@@ -7,7 +7,7 @@ const provinsi = ['Pemetaan kompetensi lanjutan', 'Rekomendasi personal', 'Pemba
 </script>
 
 <template>
-  <section id="tingkat" class="font-body mt-[106px] bg-[#eef2f8] px-6 pb-[66px] pt-[77px] text-[#0b1f4b]">
+  <section id="tingkat" class="font-body bg-[#eef2f8] px-6 pb-[66px] pt-[77px] text-[#0b1f4b]">
     <div class="mx-auto max-w-[1250px] text-center">
       <h2 class="font-display text-[30px] font-bold leading-[48px] lg:text-[40px]">Naik tingkat sesuai pencapaianmu</h2>
       <p class="mt-px text-[16px] leading-[24px] text-[#5b6785]">

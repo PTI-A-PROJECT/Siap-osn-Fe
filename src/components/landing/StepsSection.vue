@@ -11,8 +11,20 @@ const steps = [
 </script>
 
 <template>
-  <section id="cara-kerja" class="font-body bg-white text-[#0b1f4b]">
-    <div class="mx-auto max-w-[1250px] px-6 pt-[133px] lg:px-0">
+  <section id="cara-kerja" class="font-body relative overflow-hidden bg-white pb-[106px] text-[#0b1f4b]">
+    <!-- Logo latar (watermark), sama seperti di Figma -->
+    <div
+      class="pointer-events-none absolute left-1/2 top-0 hidden h-full w-[1440px] -translate-x-1/2 lg:block"
+      aria-hidden="true"
+    >
+      <img
+        src="/logo-bg.png"
+        alt=""
+        class="absolute right-0 top-[493px] w-[1150px] max-w-none select-none"
+      />
+    </div>
+
+    <div class="relative mx-auto max-w-[1250px] px-6 pt-[133px] lg:px-0">
       <h2 class="font-display text-center text-[34px] font-bold leading-[1.25] lg:text-[48px] lg:leading-[60px]">
         Cara Kerja <span class="text-[#4f8ef7]">Siap OSN</span>
       </h2>
